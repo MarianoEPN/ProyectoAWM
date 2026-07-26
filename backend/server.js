@@ -10,11 +10,7 @@ const app = express();
 
 // Middlewares globales (10mb para admitir fotos en Base64 o URLs efímeras en Azure)
 app.use(express.json({ limit: '10mb' }));
-app.use(cors({
-    origin: '*', // En producción, cambiar por el dominio real de tu Azure Static Web App
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors({ origin: 'http://localhost:5173' }));
 
 // Conexión de rutas modulares respetando tus nombres exactos
 app.use('/autorizacion', require('./routes/autorizacion.routes'));
