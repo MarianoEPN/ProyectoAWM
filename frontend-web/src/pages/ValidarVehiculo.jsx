@@ -1,31 +1,39 @@
 import React, { useState } from 'react'
 import Layout from '../components/Layout.jsx'
 import { useAppData } from '../data/AppDataContext.jsx'
+import { vehiculoColores } from '../data/uiOptions.js'
+import { getErrorMessage } from '../services/api.js'
+
+function colorHexDe(nombre) {
+  return vehiculoColores.find((c) => c.nombre.toLowerCase() === (nombre || '').toLowerCase())?.hex || '#999'
+}
 
 export default function ValidarVehiculo() {
-  const { buscarVehiculoPorPlaca, historialVehiculos } = useAppData()
-  const [placa, setPlaca] = useState('')
-  const [resultado, setResultado] = useState(null) // { found, vehiculo }
+  const { validarVehiculo, historialVehiculos } = useAppData()
+  const [tipoBusqueda, setTipoBusqueda] = useState('placa') // placa | qr
+  const [valor, setValor] = useState('')
+  const [resultado, setResultado] = useState(null)
   const [buscado, setBuscado] = useState(false)
-
   const [buscando, setBuscando] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const handleBuscar = async (e) => {
     e?.preventDefault()
-    if (!placa.trim()) return
+    if (!valor.trim()) return
     setBuscando(true)
+    setErrorMsg('')
     try {
-      const found = await buscarVehiculoPorPlaca(placa)
+      const found = await validarVehiculo(tipoBusqueda, valor.trim())
       setResultado(found)
       setBuscado(true)
     } catch (err) {
-      alert('Error al consultar el backend: ' + err.message)
+      setErrorMsg(getErrorMessage(err))
     } finally {
       setBuscando(false)
     }
   }
 
-  const esValido = resultado && resultado.estado === 'activo' && resultado.qr === 'activo'
+  const esValido = resultado && resultado.estadoActivo === 'VIGENTE'
 
   return (
     <Layout variant="validador" contentClassName="validator-content">
@@ -66,14 +74,25 @@ export default function ValidarVehiculo() {
                 </g>
               </svg>
             </div>
-            <p style={{ fontSize: 11, color: '#aaa', textAlign: 'center' }}>— o ingresa la placa manualmente —</p>
+            <p style={{ fontSize: 11, color: '#aaa', textAlign: 'center' }}>
+              — la cámara resuelve el código QR (tipoBusqueda=qr); o busca manualmente —
+            </p>
           </div>
           <form className="manual-row" onSubmit={handleBuscar}>
+            <select
+              className="form-select"
+              style={{ maxWidth: 100, height: 34 }}
+              value={tipoBusqueda}
+              onChange={(e) => setTipoBusqueda(e.target.value)}
+            >
+              <option value="placa">Placa</option>
+              <option value="qr">Código QR</option>
+            </select>
             <input
               className="manual-input"
-              placeholder="Ej. PBC-1234"
-              value={placa}
-              onChange={(e) => setPlaca(e.target.value)}
+              placeholder={tipoBusqueda === 'placa' ? 'Ej. ABC-1234' : 'Código QR'}
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
             />
             <button type="submit" className="btn-buscar" disabled={buscando}>
               {buscando ? 'Buscando…' : 'Buscar'}
@@ -84,7 +103,11 @@ export default function ValidarVehiculo() {
         <div className="card">
           <div className="card-head">
             <p className="card-title">Últimas verificaciones</p>
+            <p className="card-sub">Solo de esta sesión (el backend no las persiste todavía)</p>
           </div>
+          {historialVehiculos.length === 0 && (
+            <div style={{ padding: 16, textAlign: 'center', color: '#aaa', fontSize: 11 }}>Sin verificaciones aún.</div>
+          )}
           {historialVehiculos.map((h, i) => (
             <div className="hist-item" key={i}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -123,7 +146,16 @@ export default function ValidarVehiculo() {
           </div>
         )}
 
-        {buscado && !resultado && (
+        {buscado && errorMsg && (
+          <div className="card">
+            <div className="alert-err">
+              <i className="ti ti-alert-triangle" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
+              {errorMsg}
+            </div>
+          </div>
+        )}
+
+        {buscado && !errorMsg && !resultado && (
           <div className="card">
             <div className="card-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
@@ -137,12 +169,12 @@ export default function ValidarVehiculo() {
             </div>
             <div className="alert-err">
               <i className="ti ti-alert-triangle" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
-              No existe un vehículo registrado con esa placa.
+              No existe ningún vehículo que coincida con ese dato.
             </div>
           </div>
         )}
 
-        {buscado && resultado && (
+        {buscado && !errorMsg && resultado && (
           <div className="card">
             <div className="card-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
@@ -152,12 +184,12 @@ export default function ValidarVehiculo() {
               {esValido ? (
                 <span className="badge-ok" style={{ fontSize: 11, padding: '4px 10px' }}>
                   <i className="ti ti-check" style={{ fontSize: 11 }} aria-hidden="true" />
-                  Vehículo válido
+                  Vehículo vigente
                 </span>
               ) : (
                 <span className="badge-err" style={{ fontSize: 11, padding: '4px 10px' }}>
                   <i className="ti ti-x" style={{ fontSize: 11 }} aria-hidden="true" />
-                  No autorizado
+                  {resultado.estadoActivo}
                 </span>
               )}
             </div>
@@ -170,7 +202,7 @@ export default function ValidarVehiculo() {
             ) : (
               <div className="alert-err">
                 <i className="ti ti-shield-x" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
-                {resultado.estado === 'inactivo' ? 'Vehículo desactivado.' : 'Código QR inválido o inactivo.'}
+                Este vehículo no está vigente ({resultado.estadoActivo}). Evalúa negar el ingreso.
               </div>
             )}
 
@@ -197,24 +229,24 @@ export default function ValidarVehiculo() {
                   Color
                 </span>
                 <span className="rv" style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                  <span className="color-swatch" style={{ background: resultado.colorHex }} />
-                  {resultado.colorNombre}
+                  <span className="color-swatch" style={{ background: colorHexDe(resultado.color) }} />
+                  {resultado.color}
                 </span>
               </div>
               <div className="row">
                 <span className="rl">
-                  <i className="ti ti-clock" style={{ fontSize: 12 }} aria-hidden="true" />
-                  Verificado
+                  <i className="ti ti-user" style={{ fontSize: 12 }} aria-hidden="true" />
+                  Propietario
                 </span>
-                <span className="rv" style={{ color: '#aaa' }}>
-                  hace unos segundos
-                </span>
+                <span className="rv">{resultado.nombrePropietario}</span>
               </div>
-            </div>
-
-            <div className="hint-row" style={{ background: '#faf8f4' }}>
-              <i className="ti ti-lock" style={{ fontSize: 12, color: '#C8871A' }} aria-hidden="true" />
-              <span style={{ color: '#aaa' }}>No se expone información del propietario en esta vista.</span>
+              <div className="row">
+                <span className="rl">
+                  <i className="ti ti-calendar" style={{ fontSize: 12 }} aria-hidden="true" />
+                  Vence
+                </span>
+                <span className="rv">{resultado.fechaExpiracion}</span>
+              </div>
             </div>
           </div>
         )}

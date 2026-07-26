@@ -31,11 +31,12 @@ function StatCard({ icon, iconBg, iconColor, label, value, to }) {
 }
 
 export default function Dashboard() {
-  const { vehiculos, vendedores, categorias } = useAppData()
+  const { vehiculosMeta, vendedoresMeta, categoriasMeta, vendedores } = useAppData()
 
-  const vehiculosActivos = vehiculos.filter((v) => v.estado === 'activo').length
-  const vendedoresVigentes = vendedores.filter((v) => v.estado === 'vigente').length
-  const vendedoresCaducados = vendedores.filter((v) => v.estado === 'caducada').length
+  // Nota: estos totales de "vigentes/no vigentes" son solo de la página
+  // actualmente cargada (10 registros), porque el backend no expone un
+  // conteo agregado por estado — solo totalItems general en la metadata.
+  const vendedoresNoVigentesEnPagina = vendedores.filter((v) => v.estadoActivo !== 'VIGENTE').length
 
   return (
     <Layout variant="interno">
@@ -44,11 +45,31 @@ export default function Dashboard() {
         <p className="page-sub">Resumen general del sistema de control de vendedores y vehículos</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 20 }}>
-        <StatCard icon="ti-users" iconBg="#fef3c7" iconColor="#92400e" label="Vendedores registrados" value={vendedores.length} to="/vendedores" />
-        <StatCard icon="ti-shield-check" iconBg="#d1fae5" iconColor="#065f46" label="Autorizaciones vigentes" value={vendedoresVigentes} to="/vendedores" />
-        <StatCard icon="ti-car" iconBg="#e0f2fe" iconColor="#0369a1" label="Vehículos activos" value={vehiculosActivos} to="/vehiculos" />
-        <StatCard icon="ti-tag" iconBg="#ede9fe" iconColor="#5b21b6" label="Categorías" value={categorias.length} to="/categorias" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14, marginBottom: 20 }}>
+        <StatCard
+          icon="ti-users"
+          iconBg="#fef3c7"
+          iconColor="#92400e"
+          label="Vendedores registrados"
+          value={vendedoresMeta ? vendedoresMeta.totalItems : '—'}
+          to="/vendedores"
+        />
+        <StatCard
+          icon="ti-car"
+          iconBg="#e0f2fe"
+          iconColor="#0369a1"
+          label="Vehículos registrados"
+          value={vehiculosMeta ? vehiculosMeta.totalItems : '—'}
+          to="/vehiculos"
+        />
+        <StatCard
+          icon="ti-tag"
+          iconBg="#ede9fe"
+          iconColor="#5b21b6"
+          label="Categorías"
+          value={categoriasMeta ? categoriasMeta.totalItems : '—'}
+          to="/categorias"
+        />
       </div>
 
       <div className="card">
@@ -78,10 +99,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {vendedoresCaducados > 0 && (
+      {vendedoresNoVigentesEnPagina > 0 && (
         <div className="alert-err" style={{ margin: '16px 0 0' }}>
           <i className="ti ti-alert-triangle" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
-          Hay {vendedoresCaducados} vendedor(es) con autorización caducada. Revisa el módulo de Vendedores.
+          Hay {vendedoresNoVigentesEnPagina} vendedor(es) no vigentes en la primera página. Revisa el módulo de Vendedores.
         </div>
       )}
     </Layout>

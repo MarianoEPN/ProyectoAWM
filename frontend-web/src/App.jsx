@@ -9,6 +9,8 @@ import GestionCategorias from './pages/GestionCategorias.jsx'
 import ValidarVehiculo from './pages/ValidarVehiculo.jsx'
 import ValidarVendedor from './pages/ValidarVendedor.jsx'
 import Placeholder from './pages/Placeholder.jsx'
+import Configuracion from './pages/Configuracion.jsx'
+import Reportes from './pages/Reportes.jsx'
 
 export default function App() {
   return (
@@ -39,23 +41,10 @@ export default function App() {
       <Route
         path="/reportes"
         element={
-          <Placeholder
-            icon="ti-chart-bar"
-            title="Reportes"
-            description="Aquí se mostrarán reportes de vendedores, vehículos y verificaciones. Pantalla pendiente de diseño."
-          />
+          <Reportes/>
         }
       />
-      <Route
-        path="/configuracion"
-        element={
-          <Placeholder
-            icon="ti-settings"
-            title="Configuración"
-            description="Ajustes generales del sistema. Pantalla pendiente de diseño."
-          />
-        }
-      />
+      <Route path="/configuracion" element={<Configuracion />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

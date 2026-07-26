@@ -12,7 +12,7 @@ const app = express();
 // Middlewares globales (10mb para admitir fotos en Base64 o URLs efímeras en Azure)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cors());
+app.use(cors({ origin: 'http://localhost:5173' }));
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
