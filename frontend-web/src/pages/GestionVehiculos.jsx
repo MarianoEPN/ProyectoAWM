@@ -3,28 +3,50 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import Layout from '../components/Layout.jsx'
 import Modal from '../components/Modal.jsx'
 import { useAppData } from '../data/AppDataContext.jsx'
-import { usePagination } from '../hooks/usePagination.js'
 import { vehiculoColores } from '../data/uiOptions.js'
-import { getInitials, getAvatarColors } from '../utils/avatar.js'
+import { getErrorMessage } from '../services/api.js'
 
-const PAGE_SIZE = 4
+function colorHexDe(nombre) {
+  return vehiculoColores.find((c) => c.nombre.toLowerCase() === (nombre || '').toLowerCase())?.hex || '#999'
+}
 
 function VehiculoForm({ initial, onCancel, onSubmit }) {
   const [placa, setPlaca] = useState(initial?.placa || '')
   const [modelo, setModelo] = useState(initial?.modelo || '')
-  const [propietario, setPropietario] = useState(initial?.propietario || '')
-  const [colorNombre, setColorNombre] = useState(initial?.colorNombre || vehiculoColores[0].nombre)
+  const [color, setColor] = useState(initial?.color || vehiculoColores[0].nombre)
+  const [idHabitante, setIdHabitante] = useState(initial?.idHabitante ?? '')
+  const [fechaEmision, setFechaEmision] = useState(initial?.fechaEmision || '')
+  const [fechaExpiracion, setFechaExpiracion] = useState(initial?.fechaExpiracion || '')
   const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  const colorHex = vehiculoColores.find((c) => c.nombre === colorNombre)?.hex || '#888'
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!placa.trim() || !modelo.trim() || !propietario.trim()) {
-      setError('Completa placa, modelo y propietario.')
+    if (!placa.trim() || !modelo.trim() || !idHabitante || !fechaEmision || !fechaExpiracion) {
+      setError('Completa placa, modelo, habitante y ambas fechas.')
       return
     }
-    onSubmit({ placa, modelo, propietario, colorNombre, colorHex })
+    if (new Date(fechaExpiracion) < new Date(fechaEmision)) {
+      setError('La fecha de expiración no puede ser anterior a la de emisión.')
+      return
+    }
+    setSaving(true)
+    setError('')
+    try {
+      await onSubmit({
+        placa: placa.trim().toUpperCase(),
+        modelo: modelo.trim(),
+        color,
+        idHabitante: Number(idHabitante),
+        fechaEmision,
+        fechaExpiracion,
+        estadoActivo: initial?.estadoActivo || 'VIGENTE'
+      })
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -34,7 +56,7 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
         <input
           className="form-input"
           style={{ fontFamily: 'var(--font-mono)' }}
-          placeholder="Ej. PBC-1234"
+          placeholder="Ej. ABC-1234"
           value={placa}
           onChange={(e) => setPlaca(e.target.value)}
         />
@@ -43,23 +65,24 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
         <label className="form-label">Modelo *</label>
         <input
           className="form-input"
-          placeholder="Ej. Chevrolet Aveo 2021"
+          placeholder="Ej. Toyota Hilux"
           value={modelo}
           onChange={(e) => setModelo(e.target.value)}
         />
       </div>
       <div className="form-field">
-        <label className="form-label">Propietario *</label>
+        <label className="form-label">ID del habitante (sistema legacy) *</label>
         <input
           className="form-input"
-          placeholder="Nombre completo"
-          value={propietario}
-          onChange={(e) => setPropietario(e.target.value)}
+          type="number"
+          placeholder="Ej. 4050"
+          value={idHabitante}
+          onChange={(e) => setIdHabitante(e.target.value)}
         />
       </div>
       <div className="form-field">
         <label className="form-label">Color</label>
-        <select className="form-select" value={colorNombre} onChange={(e) => setColorNombre(e.target.value)}>
+        <select className="form-select" value={color} onChange={(e) => setColor(e.target.value)}>
           {vehiculoColores.map((c) => (
             <option key={c.nombre} value={c.nombre}>
               {c.nombre}
@@ -67,18 +90,29 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
           ))}
         </select>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#888', marginBottom: 4 }}>
-        <span className="color-swatch" style={{ background: colorHex }} />
-        Vista previa del color
+      <div style={{ display: 'flex', gap: 10 }}>
+        <div className="form-field" style={{ flex: 1 }}>
+          <label className="form-label">Fecha de emisión *</label>
+          <input type="date" className="form-input" value={fechaEmision} onChange={(e) => setFechaEmision(e.target.value)} />
+        </div>
+        <div className="form-field" style={{ flex: 1 }}>
+          <label className="form-label">Fecha de expiración *</label>
+          <input
+            type="date"
+            className="form-input"
+            value={fechaExpiracion}
+            onChange={(e) => setFechaExpiracion(e.target.value)}
+          />
+        </div>
       </div>
       {error && <p className="form-error">{error}</p>}
       <div className="form-footer">
         <button type="button" className="btn-sec" onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" className="btn-pri">
+        <button type="submit" className="btn-pri" disabled={saving}>
           <i className="ti ti-check" style={{ fontSize: 12 }} aria-hidden="true" />
-          Guardar
+          {saving ? 'Guardando…' : 'Guardar'}
         </button>
       </div>
     </form>
@@ -86,32 +120,42 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
 }
 
 export default function GestionVehiculos() {
-  const { vehiculos, addVehiculo, updateVehiculo, toggleVehiculoEstado, loading, error } = useAppData()
+  const {
+    vehiculos,
+    vehiculosMeta,
+    vehiculosPage,
+    vehiculosLoading,
+    vehiculosError,
+    fetchVehiculos,
+    addVehiculo,
+    updateVehiculo,
+    toggleVehiculoEstado,
+    obtenerVehiculo
+  } = useAppData()
   const navigate = useNavigate()
   const location = useLocation()
   const isNewRoute = location.pathname.endsWith('/nuevo')
 
-  const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('todos') // todos | activo | inactivo
+  const [filtroTexto, setFiltroTexto] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('todos') // todos | VIGENTE | REVOCADA
   const [showModal, setShowModal] = useState(isNewRoute)
   const [editing, setEditing] = useState(null)
+  const [qrVehiculo, setQrVehiculo] = useState(null) // { placa, codigoQr } | 'cargando'
 
-  const filtered = useMemo(() => {
+  // La API no expone búsqueda por texto (solo /vehiculos/validar es búsqueda
+  // exacta por placa o qr). Este filtro solo actúa sobre lo ya cargado en la
+  // página actual — para buscar en todo el padrón usa el validador.
+  const visibles = useMemo(() => {
     return vehiculos.filter((v) => {
-      const matchesSearch = v.placa.toLowerCase().includes(search.trim().toLowerCase())
-      const matchesFilter =
-        filter === 'todos' ||
-        (filter === 'activo' && v.estado === 'activo') ||
-        (filter === 'inactivo' && v.estado === 'inactivo')
-      return matchesSearch && matchesFilter
+      const t = filtroTexto.trim().toLowerCase()
+      const matchesTexto = !t || v.placa.toLowerCase().includes(t) || v.nombrePropietario.toLowerCase().includes(t)
+      const matchesEstado = filtroEstado === 'todos' || v.estadoActivo === filtroEstado
+      return matchesTexto && matchesEstado
     })
-  }, [vehiculos, search, filter])
+  }, [vehiculos, filtroTexto, filtroEstado])
 
-  const { page, setPage, totalPages, pageItems, total, next, prev } = usePagination(filtered, PAGE_SIZE)
-
-  const totalRegistrados = vehiculos.length
-  const qrActivos = vehiculos.filter((v) => v.qr === 'activo').length
-  const inactivos = vehiculos.filter((v) => v.estado === 'inactivo').length
+  const vigentesEnPagina = vehiculos.filter((v) => v.estadoActivo === 'VIGENTE').length
+  const revocadosEnPagina = vehiculos.filter((v) => v.estadoActivo !== 'VIGENTE').length
 
   const closeModal = () => {
     setShowModal(false)
@@ -120,17 +164,34 @@ export default function GestionVehiculos() {
   }
 
   const handleSubmit = async (data) => {
+    if (editing) {
+      await updateVehiculo(editing.idVehiculo, data)
+    } else {
+      await addVehiculo(data)
+    }
+    closeModal()
+  }
+
+  const handleToggleEstado = async (v) => {
     try {
-      if (editing) {
-        await updateVehiculo(editing.id, data)
-      } else {
-        await addVehiculo(data)
-      }
-      closeModal()
+      await toggleVehiculoEstado(v)
     } catch (err) {
-      alert('No se pudo guardar el vehículo: ' + (err.response?.data?.message || err.message))
+      alert('No se pudo actualizar el estado: ' + getErrorMessage(err))
     }
   }
+
+  const handleVerQr = async (v) => {
+    setQrVehiculo('cargando')
+    try {
+      const detalle = await obtenerVehiculo(v.idVehiculo)
+      setQrVehiculo(detalle)
+    } catch (err) {
+      setQrVehiculo(null)
+      alert('No se pudo obtener el código QR: ' + getErrorMessage(err))
+    }
+  }
+
+  const meta = vehiculosMeta
 
   return (
     <Layout variant="interno">
@@ -145,141 +206,114 @@ export default function GestionVehiculos() {
       <div className="card">
         <div className="stats">
           <div className="stat">
-            <p className="stat-n">{totalRegistrados}</p>
+            <p className="stat-n">{meta ? meta.totalItems : '—'}</p>
             <p className="stat-l">Total registrados</p>
           </div>
           <div className="stat">
             <p className="stat-n" style={{ color: '#065f46' }}>
-              {qrActivos}
+              {vigentesEnPagina}
             </p>
-            <p className="stat-l">QR activos</p>
+            <p className="stat-l">Vigentes (en esta página)</p>
           </div>
           <div className="stat">
             <p className="stat-n" style={{ color: '#991b1b' }}>
-              {inactivos}
+              {revocadosEnPagina}
             </p>
-            <p className="stat-l">Vehículos inactivos</p>
+            <p className="stat-l">Revocados (en esta página)</p>
           </div>
         </div>
 
         <div className="search-row">
           <input
             className="search-input"
-            placeholder="Buscar por placa…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Filtrar en esta página…"
+            value={filtroTexto}
+            onChange={(e) => setFiltroTexto(e.target.value)}
           />
-          <div className="filter-btn">
-            <i className="ti ti-adjustments-horizontal" aria-hidden="true" />
-          </div>
-          <button className="btn-search" onClick={() => setPage(1)}>
-            <i className="ti ti-search" style={{ fontSize: 13 }} aria-hidden="true" />
-            Buscar
-          </button>
           <div style={{ marginLeft: 8, display: 'flex', gap: 6 }}>
-            <div className={'chip' + (filter === 'todos' ? ' on' : '')} onClick={() => setFilter('todos')}>
+            <div className={'chip' + (filtroEstado === 'todos' ? ' on' : '')} onClick={() => setFiltroEstado('todos')}>
               Todos
             </div>
-            <div className={'chip' + (filter === 'activo' ? ' on' : '')} onClick={() => setFilter('activo')}>
+            <div className={'chip' + (filtroEstado === 'VIGENTE' ? ' on' : '')} onClick={() => setFiltroEstado('VIGENTE')}>
               <span className="dot" style={{ background: '#059669' }} />
-              QR activo
+              Vigentes
             </div>
-            <div className={'chip' + (filter === 'inactivo' ? ' on' : '')} onClick={() => setFilter('inactivo')}>
+            <div className={'chip' + (filtroEstado === 'REVOCADA' ? ' on' : '')} onClick={() => setFiltroEstado('REVOCADA')}>
               <span className="dot" style={{ background: '#dc2626' }} />
-              Inactivos
+              Revocados
             </div>
           </div>
         </div>
+        <p style={{ fontSize: 11, color: '#aaa', padding: '0 16px 10px', margin: 0 }}>
+          Este filtro solo busca dentro de la página cargada. Para buscar una placa específica en todo el padrón, usa el
+          validador.
+        </p>
 
         <table>
           <colgroup>
-            <col style={{ width: '12%' }} />
+            <col style={{ width: '14%' }} />
             <col style={{ width: '20%' }} />
-            <col style={{ width: '9%' }} />
+            <col style={{ width: '10%' }} />
             <col style={{ width: '20%' }} />
-            <col style={{ width: '11%' }} />
-            <col style={{ width: '11%' }} />
-            <col style={{ width: '17%' }} />
+            <col style={{ width: '13%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '13%' }} />
           </colgroup>
           <thead>
             <tr>
-              <th className="sortable">
-                Placa <i className="ti ti-arrows-sort" style={{ fontSize: 11 }} aria-hidden="true" />
-              </th>
+              <th>Placa</th>
               <th>Modelo</th>
               <th>Color</th>
               <th>Propietario</th>
+              <th>Vence</th>
               <th>Estado</th>
-              <th>QR</th>
               <th style={{ textAlign: 'center' }}>Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {loading && (
+            {vehiculosLoading && (
               <tr>
                 <td colSpan={7} style={{ textAlign: 'center', color: '#aaa', padding: '24px 12px' }}>
                   Cargando vehículos…
                 </td>
               </tr>
             )}
-            {!loading && error && (
+            {!vehiculosLoading && vehiculosError && (
               <tr>
                 <td colSpan={7} style={{ textAlign: 'center', color: '#991b1b', padding: '24px 12px' }}>
-                  No se pudo conectar con el backend ({error.message}).
+                  No se pudo conectar con el backend ({getErrorMessage(vehiculosError)}).
                 </td>
               </tr>
             )}
-            {!loading && !error && pageItems.length === 0 && (
+            {!vehiculosLoading && !vehiculosError && visibles.length === 0 && (
               <tr>
                 <td colSpan={7} style={{ textAlign: 'center', color: '#aaa', padding: '24px 12px' }}>
-                  No se encontraron vehículos con ese criterio.
+                  No hay vehículos que coincidan con el filtro en esta página.
                 </td>
               </tr>
             )}
-            {pageItems.map((v) => (
-              <tr key={v.id}>
+            {visibles.map((v) => (
+              <tr key={v.idVehiculo}>
                 <td className="mono">{v.placa}</td>
                 <td>{v.modelo}</td>
                 <td>
                   <div className="cell-flex">
-                    <span className="color-swatch" style={{ background: v.colorHex }} />
-                    {v.colorNombre}
+                    <span className="color-swatch" style={{ background: colorHexDe(v.color) }} />
+                    {v.color}
                   </div>
                 </td>
+                <td>{v.nombrePropietario}</td>
+                <td>{v.fechaExpiracion}</td>
                 <td>
-                  <div className="cell-flex">
-                    <div
-                      className="av"
-                      style={{ background: getAvatarColors(v.propietario).bg, color: getAvatarColors(v.propietario).color }}
-                    >
-                      {getInitials(v.propietario)}
-                    </div>
-                    {v.propietario}
-                  </div>
-                </td>
-                <td>
-                  {v.estado === 'activo' ? (
+                  {v.estadoActivo === 'VIGENTE' ? (
                     <span className="badge bg-ok">
                       <i className="ti ti-check" style={{ fontSize: 10 }} aria-hidden="true" />
-                      Activo
+                      Vigente
                     </span>
                   ) : (
                     <span className="badge bg-off">
-                      <i className="ti ti-minus" style={{ fontSize: 10 }} aria-hidden="true" />
-                      Inactivo
-                    </span>
-                  )}
-                </td>
-                <td>
-                  {v.qr === 'activo' ? (
-                    <span className="badge bg-qr">
-                      <i className="ti ti-qrcode" style={{ fontSize: 10 }} aria-hidden="true" />
-                      Activo
-                    </span>
-                  ) : (
-                    <span className="badge bg-qroff">
-                      <i className="ti ti-x" style={{ fontSize: 10 }} aria-hidden="true" />
-                      Inválido
+                      <i className="ti ti-ban" style={{ fontSize: 10 }} aria-hidden="true" />
+                      {v.estadoActivo}
                     </span>
                   )}
                 </td>
@@ -295,19 +329,16 @@ export default function GestionVehiculos() {
                     >
                       <i className="ti ti-edit" style={{ fontSize: 13 }} aria-hidden="true" />
                     </div>
-                    <div
-                      className={'iBtn qr' + (v.qr !== 'activo' ? ' disabled' : '')}
-                      title={v.qr === 'activo' ? 'Ver QR' : 'QR inactivo'}
-                    >
+                    <div className="iBtn qr" title="Ver código QR" onClick={() => handleVerQr(v)}>
                       <i className="ti ti-qrcode" style={{ fontSize: 13 }} aria-hidden="true" />
                     </div>
                     <div
                       className="iBtn danger"
-                      title={v.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                      onClick={() => toggleVehiculoEstado(v.id).catch((err) => alert('Error: ' + err.message))}
+                      title={v.estadoActivo === 'VIGENTE' ? 'Revocar' : 'Reactivar'}
+                      onClick={() => handleToggleEstado(v)}
                     >
                       <i
-                        className={v.estado === 'activo' ? 'ti ti-ban' : 'ti ti-rotate-clockwise'}
+                        className={v.estadoActivo === 'VIGENTE' ? 'ti ti-ban' : 'ti ti-rotate-clockwise'}
                         style={{ fontSize: 13 }}
                         aria-hidden="true"
                       />
@@ -320,19 +351,13 @@ export default function GestionVehiculos() {
         </table>
 
         <div className="pager">
-          <span>
-            Página {page} de {totalPages} · Total {total}
-          </span>
+          <span>{meta ? `Página ${meta.currentPage} de ${meta.totalPages} · Total ${meta.totalItems}` : '—'}</span>
           <div className="pbtns">
-            <button className="pbtn" disabled={page === 1} onClick={prev}>
+            <button className="pbtn" disabled={!meta || !meta.prevPage} onClick={() => fetchVehiculos(vehiculosPage - 1)}>
               ← Anterior
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button key={p} className={'pbtn' + (p === page ? ' on' : '')} onClick={() => setPage(p)}>
-                {p}
-              </button>
-            ))}
-            <button className="pbtn" disabled={page === totalPages} onClick={next}>
+            <button className="pbtn on">{vehiculosPage}</button>
+            <button className="pbtn" disabled={!meta || !meta.nextPage} onClick={() => fetchVehiculos(vehiculosPage + 1)}>
               Siguiente →
             </button>
           </div>
@@ -346,6 +371,24 @@ export default function GestionVehiculos() {
           onClose={closeModal}
         >
           <VehiculoForm initial={editing} onCancel={closeModal} onSubmit={handleSubmit} />
+        </Modal>
+      )}
+
+      {qrVehiculo && (
+        <Modal title="Código QR" subtitle={qrVehiculo !== 'cargando' ? qrVehiculo.placa : ''} onClose={() => setQrVehiculo(null)}>
+          {qrVehiculo === 'cargando' ? (
+            <p style={{ fontSize: 12, color: '#888' }}>Cargando…</p>
+          ) : (
+            <div style={{ textAlign: 'center' }}>
+              <i className="ti ti-qrcode" style={{ fontSize: 64, color: '#1a1a2e' }} aria-hidden="true" />
+              <p style={{ fontFamily: 'var(--font-mono)', fontSize: 12, marginTop: 10, wordBreak: 'break-all' }}>
+                {qrVehiculo.codigoQr}
+              </p>
+              <p style={{ fontSize: 11, color: '#aaa', marginTop: 6 }}>
+                Este valor es el que debe codificarse en la imagen QR física a imprimir.
+              </p>
+            </div>
+          )}
         </Modal>
       )}
     </Layout>

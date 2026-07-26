@@ -2,31 +2,34 @@ import React, { useState } from 'react'
 import Layout from '../components/Layout.jsx'
 import { useAppData } from '../data/AppDataContext.jsx'
 import { getInitials, getAvatarColors } from '../utils/avatar.js'
+import { getErrorMessage } from '../services/api.js'
 
 export default function ValidarVendedor() {
-  const { buscarVendedor, historialVendedores } = useAppData()
-  const [query, setQuery] = useState('')
+  const { validarVendedor, historialVendedores } = useAppData()
+  const [tipoBusqueda, setTipoBusqueda] = useState('cedula') // cedula | resolucion | qr
+  const [valor, setValor] = useState('')
   const [resultado, setResultado] = useState(null)
   const [buscado, setBuscado] = useState(false)
-
   const [buscando, setBuscando] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
 
   const handleBuscar = async (e) => {
     e?.preventDefault()
-    if (!query.trim()) return
+    if (!valor.trim()) return
     setBuscando(true)
+    setErrorMsg('')
     try {
-      const found = await buscarVendedor(query)
+      const found = await validarVendedor(tipoBusqueda, valor.trim())
       setResultado(found)
       setBuscado(true)
     } catch (err) {
-      alert('Error al consultar el backend: ' + err.message)
+      setErrorMsg(getErrorMessage(err))
     } finally {
       setBuscando(false)
     }
   }
 
-  const esVigente = resultado && resultado.estado === 'vigente'
+  const esVigente = resultado && resultado.estadoActivo === 'VIGENTE'
 
   return (
     <Layout variant="validador" contentClassName="validator-content">
@@ -67,14 +70,26 @@ export default function ValidarVendedor() {
                 </g>
               </svg>
             </div>
-            <p style={{ fontSize: 11, color: '#aaa', textAlign: 'center' }}>— o ingresa cédula o resolución —</p>
+            <p style={{ fontSize: 11, color: '#aaa', textAlign: 'center' }}>
+              — la cámara resuelve el QR (tipoBusqueda=qr); o busca manualmente —
+            </p>
           </div>
           <form className="manual-row" onSubmit={handleBuscar}>
+            <select
+              className="form-select"
+              style={{ maxWidth: 110, height: 34 }}
+              value={tipoBusqueda}
+              onChange={(e) => setTipoBusqueda(e.target.value)}
+            >
+              <option value="cedula">Cédula</option>
+              <option value="resolucion">Resolución</option>
+              <option value="qr">Código QR</option>
+            </select>
             <input
               className="manual-input"
-              placeholder="Cédula o N.° resolución"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Valor exacto a buscar"
+              value={valor}
+              onChange={(e) => setValor(e.target.value)}
             />
             <button type="submit" className="btn-buscar" disabled={buscando}>
               {buscando ? 'Buscando…' : 'Buscar'}
@@ -85,7 +100,11 @@ export default function ValidarVendedor() {
         <div className="card">
           <div className="card-head">
             <p className="card-title">Últimas verificaciones</p>
+            <p className="card-sub">Solo de esta sesión (el backend no las persiste todavía)</p>
           </div>
+          {historialVendedores.length === 0 && (
+            <div style={{ padding: 16, textAlign: 'center', color: '#aaa', fontSize: 11 }}>Sin verificaciones aún.</div>
+          )}
           {historialVendedores.map((h, i) => (
             <div className="hist-item" key={i}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -122,7 +141,16 @@ export default function ValidarVendedor() {
           </div>
         )}
 
-        {buscado && !resultado && (
+        {buscado && errorMsg && (
+          <div className="card">
+            <div className="alert-err">
+              <i className="ti ti-alert-triangle" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
+              {errorMsg}
+            </div>
+          </div>
+        )}
+
+        {buscado && !errorMsg && !resultado && (
           <div className="card">
             <div className="card-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
@@ -136,12 +164,12 @@ export default function ValidarVendedor() {
             </div>
             <div className="alert-err">
               <i className="ti ti-alert-triangle" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
-              No existe un vendedor registrado con ese dato.
+              No existe ningún vendedor que coincida con ese dato.
             </div>
           </div>
         )}
 
-        {buscado && resultado && (
+        {buscado && !errorMsg && resultado && (
           <div className="card">
             <div className="card-head" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
@@ -156,7 +184,7 @@ export default function ValidarVendedor() {
               ) : (
                 <span className="badge-err" style={{ fontSize: 11, padding: '4px 10px' }}>
                   <i className="ti ti-x" style={{ fontSize: 11 }} aria-hidden="true" />
-                  No vigente
+                  {resultado.estadoActivo}
                 </span>
               )}
             </div>
@@ -192,7 +220,7 @@ export default function ValidarVendedor() {
             ) : (
               <div className="alert-err">
                 <i className="ti ti-shield-x" style={{ fontSize: 16, flexShrink: 0 }} aria-hidden="true" />
-                La autorización de este vendedor no está vigente.
+                La autorización de este vendedor no está vigente ({resultado.estadoActivo}).
               </div>
             )}
 
@@ -200,9 +228,15 @@ export default function ValidarVendedor() {
               <div className="row">
                 <span className="rl">
                   <i className="ti ti-tag" style={{ fontSize: 12 }} aria-hidden="true" />
-                  Categoría
+                  Categorías
                 </span>
-                <span className="rv">{resultado.categoria}</span>
+                <span className="rv" style={{ display: 'flex', gap: 4, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  {(resultado.categorias || []).map((c) => (
+                    <span key={c.idCategoria} className="badge-n">
+                      {c.nombre}
+                    </span>
+                  ))}
+                </span>
               </div>
               <div className="row">
                 <span className="rl">
@@ -210,7 +244,7 @@ export default function ValidarVendedor() {
                   N.° resolución
                 </span>
                 <span className="rv" style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                  {resultado.resolucion}
+                  {resultado.nResolucion}
                 </span>
               </div>
               <div className="row">
@@ -218,22 +252,8 @@ export default function ValidarVendedor() {
                   <i className="ti ti-calendar" style={{ fontSize: 12 }} aria-hidden="true" />
                   Vence el
                 </span>
-                <span className="rv">{resultado.vencimientoTexto}</span>
+                <span className="rv">{resultado.fechaExpiracion}</span>
               </div>
-              <div className="row">
-                <span className="rl">
-                  <i className="ti ti-clock" style={{ fontSize: 12 }} aria-hidden="true" />
-                  Verificado
-                </span>
-                <span className="rv" style={{ color: '#aaa' }}>
-                  hace unos segundos
-                </span>
-              </div>
-            </div>
-
-            <div className="hint-row" style={{ background: '#faf8f4' }}>
-              <i className="ti ti-lock" style={{ fontSize: 12, color: '#C8871A' }} aria-hidden="true" />
-              <span style={{ color: '#aaa' }}>Datos de contacto no son visibles en esta vista.</span>
             </div>
           </div>
         )}
