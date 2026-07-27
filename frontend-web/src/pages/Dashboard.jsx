@@ -27,7 +27,7 @@ function StatCard({ icon, iconBg, iconColor, label, value, to }) {
         </div>
       </div>
     </Link>
-  )
+  ) 
 }
 
 export default function Dashboard() {
