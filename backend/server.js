@@ -16,6 +16,7 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 const allowedOrigins = [
   'http://localhost:15163',
   'http://localhost:5173',
+  'https://proyecto-awm.vercel.app'
   ...(process.env.FRONTEND_URLS ? process.env.FRONTEND_URLS.split(',').map((url) => url.trim()) : []),
   process.env.FRONTEND_URL
 ].filter(Boolean);
