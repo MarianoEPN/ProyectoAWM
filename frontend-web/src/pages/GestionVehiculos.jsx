@@ -360,10 +360,18 @@ export default function GestionVehiculos() {
                         setShowModal(true)
                       }}
                     >
-                      <i className="ti ti-edit" style={{ fontSize: 13 }} aria-hidden="true" />
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7" />
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                      </svg>
                     </div>
                     <div className="iBtn qr" title="Ver código QR" onClick={() => handleVerQr(v)}>
-                      <i className="ti ti-qrcode" style={{ fontSize: 13 }} aria-hidden="true" />
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <rect x="3" y="3" width="7" height="7" />
+                        <rect x="14" y="3" width="7" height="7" />
+                        <rect x="14" y="14" width="7" height="7" />
+                        <path d="M14 14h-4v4" />
+                      </svg>
                     </div>
                     {v.estadoActivo === 'VIGENTE' ? (
                       <div
@@ -371,7 +379,11 @@ export default function GestionVehiculos() {
                         title="Revocar"
                         onClick={() => handleToggleEstado(v)}
                       >
-                        <i className="ti ti-ban" style={{ fontSize: 13 }} aria-hidden="true" />
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <circle cx="12" cy="12" r="10" />
+                          <line x1="15" y1="9" x2="9" y2="15" />
+                          <line x1="9" y1="9" x2="15" y2="15" />
+                        </svg>
                       </div>
                     ) : (
                       <div
@@ -379,7 +391,12 @@ export default function GestionVehiculos() {
                         title="Reactivar"
                         onClick={() => handleReactivar(v)}
                       >
-                        <i className="ti ti-refresh" style={{ fontSize: 13 }} aria-hidden="true" />
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M3 12a9 9 0 0 1 15.46-6.36L21 5" />
+                          <path d="M21 3v6h-6" />
+                          <path d="M21 12a9 9 0 0 1-15.46 6.36L3 19" />
+                          <path d="M3 21v-6h6" />
+                        </svg>
                       </div>
                     )}
                   </div>

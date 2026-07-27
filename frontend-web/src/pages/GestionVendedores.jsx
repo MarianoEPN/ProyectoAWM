@@ -10,7 +10,8 @@ const resolveImageUrl = (src) => {
   if (!src) return null
   if (src.startsWith('http://') || src.startsWith('https://')) return src
   if (src.startsWith('/uploads')) {
-    return `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${src}`
+    const baseUrl = import.meta.env.VITE_API_URL || window.location.origin
+    return `${baseUrl}${src}`
   }
   return src
 }
@@ -23,7 +24,6 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit, reactivar }) {
   const [fechaExpiracion, setFechaExpiracion] = useState(initial?.fechaExpiracion || '')
   const [idHabitante, setIdHabitante] = useState(initial?.idHabitante ?? '')
   const [categoriasIds, setCategoriasIds] = useState((initial?.categorias || []).map((c) => c.idCategoria))
-  // 1. NUEVOS ESTADOS PARA MANEJAR LA FOTO Y SU PREVISUALIZACIÓN
   const [fotoFile, setFotoFile] = useState(null)
   const [preview, setPreview] = useState(initial?.foto || null)
 
@@ -44,18 +44,9 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit, reactivar }) {
         return
       }
       setFotoFile(file)
-      setPreview(URL.createObjectURL(file)) // Genera URL temporal para vista previa
+      setPreview(URL.createObjectURL(file))
       setError('')
     }
-  }
-
-  const resolveImageUrl = (src) => {
-    if (!src) return null
-    if (src.startsWith('http://') || src.startsWith('https://')) return src
-    if (src.startsWith('/uploads')) {
-      return `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${src}`
-    }
-    return src
   }
 
   const previewUrl = resolveImageUrl(preview)

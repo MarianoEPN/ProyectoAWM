@@ -8,7 +8,8 @@ const resolveImageUrl = (src) => {
   if (!src) return null
   if (src.startsWith('http://') || src.startsWith('https://')) return src
   if (src.startsWith('/uploads')) {
-    return `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${src}`
+    const baseUrl = import.meta.env.VITE_API_URL || window.location.origin
+    return `${baseUrl}${src}`
   }
   return src
 }
