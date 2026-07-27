@@ -49,18 +49,11 @@ jobs:
         with:
           name: node-app
       
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_5FD0E1D3FB794ACA9B39FCC409C2DF9C }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_15E447883F6A45438426A6973D5D4922 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A08A7112CA6142868E8329F031CB58F0 }}
-
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'proyectoAWM-backend'
-          slot-name: 'Production'
-          package: . 
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./backend 
           
