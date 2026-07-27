@@ -2,7 +2,7 @@ import axios from 'axios'
 
 // Cambia esto en tu .env (ver .env.example): VITE_API_URL=https://tu-backend/api
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
+  baseURL: import.meta.env.VITE_API_URL || 'https://proyectoawm-backend-h6gfbtcph8bvgncu.canadacentral-01.azurewebsites.net',
   headers: { 'Content-Type': 'application/json' }
 })
 
