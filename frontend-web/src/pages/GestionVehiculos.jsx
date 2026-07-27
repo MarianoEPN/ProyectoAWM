@@ -3,8 +3,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import Layout from '../components/Layout.jsx'
 import Modal from '../components/Modal.jsx'
 import { useAppData } from '../data/AppDataContext.jsx'
-import { vehiculoColores } from '../data/uiOptions.js'
 import { getErrorMessage } from '../services/api.js'
+import { vehiculoColores } from '../data/uiOptions.js'
 
 function colorHexDe(nombre) {
   return vehiculoColores.find((c) => c.nombre.toLowerCase() === (nombre || '').toLowerCase())?.hex || '#999'
@@ -13,7 +13,7 @@ function colorHexDe(nombre) {
 function VehiculoForm({ initial, onCancel, onSubmit, reactivar }) {
   const [placa, setPlaca] = useState(initial?.placa || '')
   const [modelo, setModelo] = useState(initial?.modelo || '')
-  const [color, setColor] = useState(initial?.color || vehiculoColores[0].nombre)
+  const [color, setColor] = useState(initial?.color || '')
   const [idHabitante, setIdHabitante] = useState(initial?.idHabitante ?? '')
   const [fechaEmision, setFechaEmision] = useState(initial?.fechaEmision || '')
   const [fechaExpiracion, setFechaExpiracion] = useState(initial?.fechaExpiracion || '')
@@ -24,11 +24,16 @@ function VehiculoForm({ initial, onCancel, onSubmit, reactivar }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!placa.trim() || !modelo.trim() || !idHabitante || !fechaEmision || !fechaExpiracion) {
-      setError('Completa placa, modelo, habitante y ambas fechas.')
+    if (!placa.trim() || !modelo.trim() || !color.trim() || !idHabitante || !fechaEmision || !fechaExpiracion) {
+      setError('Completa placa, modelo, color, habitante y ambas fechas.')
       return
     }
-    if (new Date(fechaExpiracion) < new Date(fechaEmision)) {
+    const today = new Date().toISOString().split('T')[0]
+    if (fechaEmision > today) {
+      setError('La fecha de emisión no puede ser posterior a la fecha actual.')
+      return
+    }
+    if (fechaExpiracion < fechaEmision) {
       setError('La fecha de expiración no puede ser anterior a la de emisión.')
       return
     }
@@ -86,19 +91,14 @@ function VehiculoForm({ initial, onCancel, onSubmit, reactivar }) {
         />
       </div>
       <div className="form-field">
-        <label className="form-label">Color</label>
-        <select
-          className="form-select"
+        <label className="form-label">Color <span style={{ color: '#991b1b' }}>*</span></label>
+        <input
+          className="form-input"
+          placeholder="Ej. Azul electricidad"
           value={color}
           onChange={(e) => setColor(e.target.value)}
           disabled={isReactivar}
-        >
-          {vehiculoColores.map((c) => (
-            <option key={c.nombre} value={c.nombre}>
-              {c.nombre}
-            </option>
-          ))}
-        </select>
+        />
       </div>
       <div style={{ display: 'flex', gap: 10 }}>
         <div className="form-field" style={{ flex: 1 }}>
@@ -107,6 +107,7 @@ function VehiculoForm({ initial, onCancel, onSubmit, reactivar }) {
             type="date"
             className="form-input"
             value={fechaEmision}
+            max={new Date().toISOString().split('T')[0]}
             onChange={(e) => setFechaEmision(e.target.value)}
           />
         </div>

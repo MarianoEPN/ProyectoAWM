@@ -14,6 +14,22 @@ export const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token')
   if (token) config.headers.Authorization = `Bearer ${token}`
+
+  if (config.data instanceof FormData) {
+    if (config.headers) {
+      delete config.headers['Content-Type']
+      delete config.headers['content-type']
+      if (config.headers.common) {
+        delete config.headers.common['Content-Type']
+        delete config.headers.common['content-type']
+      }
+      if (config.headers.post) {
+        delete config.headers.post['Content-Type']
+        delete config.headers.post['content-type']
+      }
+    }
+  }
+
   return config
 })
 
@@ -42,10 +58,12 @@ export const vendedoresApi = {
 
   // POST /vendedores
   // body: { cedula, nombre, foto, nResolucion, fechaEmision, fechaExpiracion, estadoActivo, idHabitante, categoriasIds: [] }
-  crear: (data) => api.post('/vendedores', data).then((res) => res.data),
+  crear: (data) =>
+    api.post('/vendedores', data).then((res) => res.data),
 
   // PUT /vendedores/{id} — reemplaza TODOS los campos editables (mismo body que crear)
-  actualizar: (id, data) => api.put(`/vendedores/${id}`, data).then((res) => res.data),
+  actualizar: (id, data) =>
+    api.put(`/vendedores/${id}`, data).then((res) => res.data),
 
   // GET /vendedores/validar?tipoBusqueda=cedula|resolucion|qr&valor=...
   // Responde 404 si no hay coincidencia -> lo traducimos a null.

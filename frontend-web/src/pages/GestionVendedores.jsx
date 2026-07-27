@@ -6,6 +6,15 @@ import { useAppData } from '../data/AppDataContext.jsx'
 import { getInitials, getAvatarColors } from '../utils/avatar.js'
 import { getErrorMessage } from '../services/api.js'
 
+const resolveImageUrl = (src) => {
+  if (!src) return null
+  if (src.startsWith('http://') || src.startsWith('https://')) return src
+  if (src.startsWith('/uploads')) {
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${src}`
+  }
+  return src
+}
+
 function VendedorForm({ initial, categorias, onCancel, onSubmit, reactivar }) {
   const [cedula, setCedula] = useState(initial?.cedula || '')
   const [nombre, setNombre] = useState(initial?.nombre || '')
@@ -40,10 +49,25 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit, reactivar }) {
     }
   }
 
+  const resolveImageUrl = (src) => {
+    if (!src) return null
+    if (src.startsWith('http://') || src.startsWith('https://')) return src
+    if (src.startsWith('/uploads')) {
+      return `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${src}`
+    }
+    return src
+  }
+
+  const previewUrl = resolveImageUrl(preview)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!cedula.trim() || !nombre.trim() || !nResolucion.trim() || !fechaEmision || !fechaExpiracion) {
       setError('Completa cédula, nombre, resolución y ambas fechas.')
+      return
+    }
+    if (fechaEmision > new Date().toISOString().split('T')[0]) {
+      setError('La fecha de emisión no puede ser posterior a la fecha actual.')
       return
     }
     if (!/^\d{10}$/.test(cedula.trim())) {
@@ -54,7 +78,7 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit, reactivar }) {
       setError('Selecciona al menos una categoría.')
       return
     }
-    if (new Date(fechaExpiracion) < new Date(fechaEmision)) {
+    if (fechaExpiracion < fechaEmision) {
       setError('La fecha de expiración no puede ser anterior a la de emisión.')
       return
     }
@@ -71,8 +95,8 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit, reactivar }) {
       formData.append('estadoActivo', initial?.estadoActivo || 'VIGENTE')
       if (idHabitante) formData.append('idHabitante', Number(idHabitante))
 
-      // Pasar array de categorías
-      categoriasIds.forEach((id) => formData.append('categoriasIds', id))
+      // Pasar array de categorías como JSON para evitar problemas de parsing en multipart/form-data
+      formData.append('categoriasIds', JSON.stringify(categoriasIds))
 
       // Adjuntar el archivo de imagen si el usuario seleccionó uno nuevo
       if (fotoFile) {
@@ -107,40 +131,40 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit, reactivar }) {
               flexShrink: 0
             }}
           >
-            {preview ? (
-              <img src={preview} alt="Vista previa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt="Vista previa"
+                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
             ) : (
               <i className="ti ti-user" style={{ fontSize: 24, color: '#999' }} />
             )}
           </div>
-
-          {/* Selector de archivo */}
-          <div style={{ flex: 1 }}>
-            <input
-              type="file"
-              accept="image/*"
-              id="foto-input"
-              onChange={handleFotoChange}
-              disabled={isReactivar}
-              style={{ display: 'none' }}
-            />
-            <label
-              htmlFor="foto-input"
-              className="btn-sec"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 6,
-                cursor: isReactivar ? 'not-allowed' : 'pointer',
-                padding: '6px 12px',
-                fontSize: 12
-              }}
-            >
-              <i className="ti ti-upload" style={{ fontSize: 14 }} />
-              {preview ? 'Cambiar foto' : 'Subir foto'}
-            </label>
-            {fotoFile && <span style={{ fontSize: 11, color: '#666', marginLeft: 8 }}>{fotoFile.name}</span>}
-          </div>
+          <input
+            type="file"
+            accept="image/*"
+            id="foto-input"
+            onChange={handleFotoChange}
+            disabled={isReactivar}
+            style={{ display: 'none' }}
+          />
+          <label
+            htmlFor="foto-input"
+            className="btn-sec"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              cursor: isReactivar ? 'not-allowed' : 'pointer',
+              padding: '6px 12px',
+              fontSize: 12
+            }}
+          >
+            <i className="ti ti-upload" style={{ fontSize: 14 }} />
+            {preview ? 'Cambiar foto' : 'Subir foto'}
+          </label>
+          {fotoFile && <span style={{ fontSize: 11, color: '#666', marginLeft: 8 }}>{fotoFile.name}</span>}
         </div>
       </div>
       <div className="form-field">
@@ -291,7 +315,11 @@ export default function GestionVendedores() {
   const handleSubmit = async (data) => {
     if (editing) {
       if (editing.reactivar) {
-        data.estadoActivo = 'VIGENTE';
+        if (data instanceof FormData) {
+          data.set('estadoActivo', 'VIGENTE')
+        } else {
+          data.estadoActivo = 'VIGENTE'
+        }
       }
       await updateVendedor(editing.idVendedor, data)
     } else {
@@ -452,7 +480,15 @@ export default function GestionVendedores() {
                       className="av"
                       style={{ background: getAvatarColors(v.nombre).bg, color: getAvatarColors(v.nombre).color }}
                     >
-                      {getInitials(v.nombre)}
+                      {v.foto ? (
+                        <img
+                          src={resolveImageUrl(v.foto)}
+                          alt={v.nombre}
+                          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                        />
+                      ) : (
+                        getInitials(v.nombre)
+                      )}
                     </div>
                     {v.nombre}
                   </div>
@@ -467,7 +503,7 @@ export default function GestionVendedores() {
                   </div>
                 </td>
                 <td className="mono-sm">{v.nResolucion}</td>
-                <td>{v.vencimientoAutorizacion}</td>
+                <td>{v.fechaExpiracion || v.vencimientoAutorizacion}</td>
                 <td>
                   {v.estadoActivo === 'VIGENTE' ? (
                     <span className="badge bg-ok">
@@ -483,17 +519,31 @@ export default function GestionVendedores() {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: 4 }}>
-                    <div className="iBtn edit" title="Editar" onClick={() => handleEditar(v)}>
-                      <i className="ti ti-edit" style={{ fontSize: 13 }} aria-hidden="true" />
-                    </div>
+                    <button type="button" className="iBtn edit" title="Editar" onClick={() => handleEditar(v)}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <path d="M12 20h9" />
+                        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                      </svg>
+                    </button>
                     {v.estadoActivo === 'REVOCADA' ? (
-                      <div className="iBtn reactivate" title="Reactivar" onClick={() => handleReactivar(v)}>
-                        <i className="ti ti-refresh" style={{ fontSize: 13 }} aria-hidden="true" />
-                      </div>
+                      <button type="button" className="iBtn reactivate" title="Reactivar" onClick={() => handleReactivar(v)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M3 12a9 9 0 0 1 15.46-6.36L21 5" />
+                          <path d="M21 3v6h-6" />
+                          <path d="M21 12a9 9 0 0 1-15.46 6.36L3 19" />
+                          <path d="M3 21v-6h6" />
+                        </svg>
+                      </button>
                     ) : (
-                      <div className="iBtn danger" title="Revocar" onClick={() => handleRevocar(v)}>
-                        <i className="ti ti-ban" style={{ fontSize: 13 }} aria-hidden="true" />
-                      </div>
+                      <button type="button" className="iBtn danger" title="Eliminar" onClick={() => handleRevocar(v)}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+                          <line x1="10" y1="11" x2="10" y2="17" />
+                          <line x1="14" y1="11" x2="14" y2="17" />
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+                        </svg>
+                      </button>
                     )}
                   </div>
                 </td>

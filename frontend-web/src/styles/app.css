@@ -317,6 +317,7 @@ tr:hover td {
   font-size: 10px;
   font-weight: 500;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 /* ---------- Badges ---------- */

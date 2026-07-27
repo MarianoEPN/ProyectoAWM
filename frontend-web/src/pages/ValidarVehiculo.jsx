@@ -103,7 +103,6 @@ export default function ValidarVehiculo() {
         <div className="card">
           <div className="card-head">
             <p className="card-title">Últimas verificaciones</p>
-            <p className="card-sub">Solo de esta sesión (el backend no las persiste todavía)</p>
           </div>
           {historialVehiculos.length === 0 && (
             <div style={{ padding: 16, textAlign: 'center', color: '#aaa', fontSize: 11 }}>Sin verificaciones aún.</div>

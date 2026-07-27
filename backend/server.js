@@ -12,7 +12,24 @@ const app = express();
 // Middlewares globales (10mb para admitir fotos en Base64 o URLs efímeras en Azure)
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(cors("http://localhost:15163"));
+
+const allowedOrigins = [
+  'http://localhost:15163',
+  'http://localhost:5173',
+  ...(process.env.FRONTEND_URLS ? process.env.FRONTEND_URLS.split(',').map((url) => url.trim()) : []),
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS no permitido: ${origin}`), false);
+    }
+  })
+);
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Conexión de rutas modulares respetando tus nombres exactos
