@@ -1,0 +1,4432 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+assets/
+  adaptive-icon.png
+  favicon.png
+  icon.png
+  splash.png
+componentes/
+  Modal.jsx
+gatillos/
+  useAppData.js
+  useAuth.js
+pantallas/
+  CategoriaFormulario.jsx
+  CategoriasLista.jsx
+  Dashboard.jsx
+  RoleSelection.jsx
+  ValidarVehiculo.jsx
+  ValidarVendedor.jsx
+  VehiculoDetalle.jsx
+  VehiculoFormulario.jsx
+  VehiculosLista.jsx
+  VendedoresLista.jsx
+  VendedorFormulario.jsx
+servicios/
+  api.js
+utilidades/
+  config.js
+  uiOptions.js
+.gitignore
+App.js
+app.json
+babel.config.js
+index.js
+metro.config.js
+package.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="componentes/Modal.jsx">
+/**
+ * @fileoverview Sistema de Modal reutilizable basado en RNModal.
+ * Exporta componentes atómicos: Modal, ModalContent, ModalHeader, ModalActions, ModalButton.
+ * @module componentes/Modal
+ */
+
+import React from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, Modal as RNModal } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { COLORS } from '../utilidades/config';
+
+/**
+ * Modal envolvente. Controla visibilidad y animación.
+ * @param {Object} props
+ * @param {boolean} props.visible - Controla si se muestra.
+ * @param {string} [props.animationType='slide'] - Tipo de animación de RN.
+ * @param {boolean} [props.transparent=true] - Fondo transparente.
+ * @param {Function} [props.onRequestClose] - Callback al solicitar cierre.
+ * @param {React.ReactNode} props.children - Contenido interno.
+ * @param {Object} [props.style] - Estilos adicionales del wrapper.
+ * @returns {JSX.Element|null}
+ */
+export default function Modal({
+  visible,
+  animationType = 'slide',
+  transparent = true,
+  onRequestClose,
+  children,
+  style,
+}) {
+  if (!visible) return null;
+
+  return (
+    <RNModal
+      visible={visible}
+      animationType={animationType}
+      transparent={transparent}
+      onRequestClose={onRequestClose}
+    >
+      <View style={[styles.modalOverlay, transparent && styles.modalOverlayTransparent]}>
+        <View
+          style={[styles.modalWrapper, style]}
+          onTouchStart={(e) => e.stopPropagation()}
+        >
+          {children}
+        </View>
+      </View>
+    </RNModal>
+  );
+}
+
+/**
+ * Contenedor del contenido con KeyboardAvoidingView.
+ * @param {Object} props
+ * @param {React.ReactNode} props.children
+ * @param {Object} [props.style]
+ * @returns {JSX.Element}
+ */
+export function ModalContent({ children, style }) {
+  return (
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={[styles.modalContent, style]}
+    >
+      {children}
+    </KeyboardAvoidingView>
+  );
+}
+
+/**
+ * Cabecera del modal con título y botón de cierre opcional.
+ * @param {Object} props
+ * @param {string} props.title - Título a mostrar.
+ * @param {Function} [props.onClose] - Acción del botón X.
+ * @param {Object} [props.style]
+ * @returns {JSX.Element}
+ */
+export function ModalHeader({ title, onClose, style }) {
+  return (
+    <View style={[styles.modalHeader, style]}>
+      <Text style={styles.modalHeaderTitle}>{title}</Text>
+      {onClose && (
+        <TouchableOpacity onPress={onClose} style={styles.modalCloseBtn}>
+          <Ionicons name="close" size={24} color={COLORS.gray} />
+        </TouchableOpacity>
+      )}
+    </View>
+  );
+}
+
+/**
+ * Fila de acciones del modal (botones).
+ * @param {Object} props
+ * @param {React.ReactNode} props.children
+ * @param {Object} [props.style]
+ * @returns {JSX.Element}
+ */
+export function ModalActions({ children, style }) {
+  return (
+    <View style={[styles.modalActions, style]}>
+      {children}
+    </View>
+  );
+}
+
+/**
+ * Botón individual para el modal.
+ * @param {Object} props
+ * @param {string} props.title - Texto del botón.
+ * @param {Function} props.onPress - Handler de press.
+ * @param {boolean} [props.disabled=false] - Si está deshabilitado.
+ * @param {string} [props.variant='primary'] - 'primary' | 'danger'.
+ * @param {Object} [props.style]
+ * @param {Object} [props.textStyle]
+ * @returns {JSX.Element}
+ */
+export function ModalButton({
+  title,
+  onPress,
+  disabled = false,
+  variant = 'primary',
+  style,
+  textStyle,
+}) {
+  const isPrimary = variant === 'primary';
+  const isDanger = variant === 'danger';
+  
+  return (
+    <TouchableOpacity
+      style={[
+        styles.modalBtn,
+        isPrimary && styles.modalBtnPrimary,
+        isDanger && styles.modalBtnDanger,
+        disabled && styles.modalBtnDisabled,
+        style,
+      ]}
+      onPress={onPress}
+      disabled={disabled}
+    >
+      <Text style={[
+        styles.modalBtnText,
+        (isPrimary || isDanger) && styles.modalBtnTextWhite,
+        textStyle,
+      ]}>
+        {title}
+      </Text>
+    </TouchableOpacity>
+  );
+}
+
+const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlayTransparent: {
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  modalWrapper: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: 16,
+  },
+  modalContent: {
+    flex: 1,
+    backgroundColor: COLORS.white,
+    borderRadius: 20,
+    padding: 20,
+    maxHeight: '90%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: COLORS.border,
+  },
+  modalHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  modalCloseBtn: {
+    padding: 4,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16,
+    gap: 12,
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalBtnPrimary: {
+    backgroundColor: COLORS.primary,
+  },
+  modalBtnDanger: {
+    backgroundColor: COLORS.danger,
+  },
+  modalBtnDisabled: {
+    opacity: 0.6,
+  },
+  modalBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.gray,
+  },
+  modalBtnTextWhite: {
+    color: COLORS.white,
+  },
+});
+</file>
+
+<file path="gatillos/useAppData.js">
+/**
+ * @fileoverview Contexto global de datos de la aplicación.
+ * Gestiona listas paginadas de vehículos, vendedores y categorías,
+ * además de operaciones CRUD y validaciones.
+ * @module hooks/useAppData
+ */
+
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { vehiculosApi, vendedoresApi, categoriasApi, getErrorMessage } from '../servicios/api';
+
+/**
+ * Contexto de datos de la aplicación.
+ * @type {React.Context<AppDataContextValue|null>}
+ */
+const AppDataContext = createContext(null);
+
+/** Estado inicial vacío para listas paginadas. */
+const emptyList = { items: [], metadata: null, page: 1, limit: 10, loading: true, error: null };
+
+/**
+ * Provider que centraliza el estado y las operaciones de datos.
+ * @param {Object} props
+ * @param {React.ReactNode} props.children - Componentes hijos.
+ * @returns {JSX.Element}
+ */
+export function AppDataProvider({ children }) {
+  // ─── Estados de listas ─────────────────────────────────────────────────────
+
+  const [vehiculosState, setVehiculosState] = useState(emptyList);
+  const [vendedoresState, setVendedoresState] = useState(emptyList);
+  const [categoriasState, setCategoriasState] = useState(emptyList);
+
+  // ─── Historiales de validación ─────────────────────────────────────────────
+
+  const [historialVehiculos, setHistorialVehiculos] = useState([]);
+  const [historialVendedores, setHistorialVendedores] = useState([]);
+
+  // ─── Fetchers ──────────────────────────────────────────────────────────────
+
+  /**
+   * Obtiene la lista paginada de vehículos.
+   * @async
+   * @param {number} [page=1] - Página solicitada.
+   * @param {number} [limit=10] - Tamaño de página.
+   */
+  const fetchVehiculos = useCallback(async (page = 1, limit = 10) => {
+    setVehiculosState((s) => ({ ...s, loading: true, error: null }));
+    try {
+      const { metadata, data } = await vehiculosApi.listar({ page, limit });
+      setVehiculosState({ items: data, metadata, page, limit, loading: false, error: null });
+    } catch (err) {
+      setVehiculosState((s) => ({ ...s, loading: false, error: err }));
+    }
+  }, []);
+
+  /**
+   * Obtiene la lista paginada de vendedores.
+   * @async
+   * @param {number} [page=1] - Página solicitada.
+   * @param {number} [limit=10] - Tamaño de página.
+   */
+  const fetchVendedores = useCallback(async (page = 1, limit = 10) => {
+    setVendedoresState((s) => ({ ...s, loading: true, error: null }));
+    try {
+      const { metadata, data } = await vendedoresApi.listar({ page, limit });
+      setVendedoresState({ items: data, metadata, page, limit, loading: false, error: null });
+    } catch (err) {
+      setVendedoresState((s) => ({ ...s, loading: false, error: err }));
+    }
+  }, []);
+
+  /**
+   * Obtiene la lista paginada de categorías.
+   * @async
+   * @param {number} [page=1] - Página solicitada.
+   * @param {number} [limit=10] - Tamaño de página.
+   */
+  const fetchCategorias = useCallback(async (page = 1, limit = 10) => {
+    setCategoriasState((s) => ({ ...s, loading: true, error: null }));
+    try {
+      const { metadata, data } = await categoriasApi.listar({ page, limit });
+      setCategoriasState({ items: data, metadata, page, limit, loading: false, error: null });
+    } catch (err) {
+      setCategoriasState((s) => ({ ...s, loading: false, error: err }));
+    }
+  }, []);
+
+  /** Carga inicial de datos al montar el provider. */
+  useEffect(() => {
+    fetchVehiculos(1);
+    fetchVendedores(1);
+    fetchCategorias(1);
+  }, [fetchVehiculos, fetchVendedores, fetchCategorias]);
+
+  // ─── Operaciones: Vehículos ────────────────────────────────────────────────
+
+  /**
+   * Crea un vehículo y refresca la lista.
+   * @async
+   * @param {Object} data - Datos del vehículo.
+   * @returns {Promise<Object>} Vehículo creado.
+   */
+  const addVehiculo = useCallback(
+    async (data) => {
+      const nuevo = await vehiculosApi.crear(data);
+      await fetchVehiculos(vehiculosState.page, vehiculosState.limit);
+      return nuevo;
+    },
+    [fetchVehiculos, vehiculosState.page, vehiculosState.limit]
+  );
+
+  /**
+   * Actualiza un vehículo y refresca la lista.
+   * @async
+   * @param {number|string} id - ID del vehículo.
+   * @param {Object} data - Campos a actualizar.
+   * @returns {Promise<Object>} Vehículo actualizado.
+   */
+  const updateVehiculo = useCallback(
+    async (id, data) => {
+      const actualizado = await vehiculosApi.actualizar(id, data);
+      await fetchVehiculos(vehiculosState.page, vehiculosState.limit);
+      return actualizado;
+    },
+    [fetchVehiculos, vehiculosState.page, vehiculosState.limit]
+  );
+
+  /**
+   * Alterna el estado de un vehículo entre VIGENTE y REVOCADA.
+   * @async
+   * @param {Object} vehiculo - Vehículo completo.
+   * @returns {Promise<Object>} Vehículo actualizado.
+   */
+  const toggleVehiculoEstado = useCallback(
+    async (vehiculo) => {
+      const nuevoEstado = vehiculo.estadoActivo === 'VIGENTE' ? 'REVOCADA' : 'VIGENTE';
+      const actualizado = await vehiculosApi.actualizar(vehiculo.idVehiculo, {
+        placa: vehiculo.placa,
+        modelo: vehiculo.modelo,
+        color: vehiculo.color,
+        idHabitante: vehiculo.idHabitante,
+        fechaEmision: vehiculo.fechaEmision,
+        fechaExpiracion: vehiculo.fechaExpiracion,
+        estadoActivo: nuevoEstado,
+      });
+      await fetchVehiculos(vehiculosState.page, vehiculosState.limit);
+      return actualizado;
+    },
+    [fetchVehiculos, vehiculosState.page, vehiculosState.limit]
+  );
+
+  /**
+   * Obtiene el detalle de un vehículo por ID.
+   * @param {number|string} id - ID del vehículo.
+   * @returns {Promise<Object>} Datos del vehículo.
+   */
+  const obtenerVehiculo = useCallback((id) => vehiculosApi.obtener(id), []);
+
+  /**
+   * Valida un vehículo y registra el resultado en historial.
+   * @async
+   * @param {string} tipoBusqueda - 'placa' | 'qr'.
+   * @param {string} valor - Valor a validar.
+   * @returns {Promise<Object|null>} Vehículo encontrado o null.
+   */
+  const validarVehiculo = useCallback(async (tipoBusqueda, valor) => {
+    const found = await vehiculosApi.validar(tipoBusqueda, valor);
+    setHistorialVehiculos((prev) => [
+      {
+        placa: found ? found.placa : valor,
+        detalle: found ? `${found.modelo} · ${found.color}` : 'No encontrado',
+        resultado: found && found.estadoActivo === 'VIGENTE' ? 'valido' : 'invalido',
+        hace: 'hace unos segundos',
+      },
+      ...prev,
+    ].slice(0, 6));
+    return found;
+  }, []);
+
+  // ─── Operaciones: Vendedores ───────────────────────────────────────────────
+
+  /**
+   * Crea un vendedor y refresca listas de vendedores y categorías.
+   * @async
+   * @param {Object} data - Datos del vendedor.
+   * @returns {Promise<Object>} Vendedor creado.
+   */
+  const addVendedor = useCallback(
+    async (data) => {
+      const nuevo = await vendedoresApi.crear(data);
+      await Promise.all([
+        fetchVendedores(vendedoresState.page, vendedoresState.limit),
+        fetchCategorias(categoriasState.page, categoriasState.limit),
+      ]);
+      return nuevo;
+    },
+    [fetchVendedores, fetchCategorias, vendedoresState.page, vendedoresState.limit, categoriasState.page, categoriasState.limit]
+  );
+
+  /**
+   * Actualiza un vendedor y refresca listas dependientes.
+   * @async
+   * @param {number|string} id - ID del vendedor.
+   * @param {Object} data - Campos a actualizar.
+   * @returns {Promise<Object>} Vendedor actualizado.
+   */
+  const updateVendedor = useCallback(
+    async (id, data) => {
+      const actualizado = await vendedoresApi.actualizar(id, data);
+      await Promise.all([
+        fetchVendedores(vendedoresState.page, vendedoresState.limit),
+        fetchCategorias(categoriasState.page, categoriasState.limit),
+      ]);
+      return actualizado;
+    },
+    [fetchVendedores, fetchCategorias, vendedoresState.page, vendedoresState.limit, categoriasState.page, categoriasState.limit]
+  );
+
+  /**
+   * Obtiene el detalle de un vendedor por ID.
+   * @param {number|string} id - ID del vendedor.
+   * @returns {Promise<Object>} Datos del vendedor.
+   */
+  const obtenerVendedor = useCallback((id) => vendedoresApi.obtener(id), []);
+
+  /**
+   * Revoca la autorización de un vendedor cambiando su estado a REVOCADA.
+   * @async
+   * @param {Object} vendedorCompleto - Objeto completo del vendedor.
+   * @returns {Promise<Object>} Vendedor actualizado.
+   */
+  const revocarVendedor = useCallback(
+    async (vendedorCompleto) => {
+      const actualizado = await vendedoresApi.actualizar(vendedorCompleto.idVendedor, {
+        cedula: vendedorCompleto.cedula,
+        nombre: vendedorCompleto.nombre,
+        foto: vendedorCompleto.foto,
+        nResolucion: vendedorCompleto.nResolucion,
+        fechaEmision: vendedorCompleto.fechaEmision,
+        fechaExpiracion: vendedorCompleto.fechaExpiracion,
+        estadoActivo: 'REVOCADA',
+        idHabitante: vendedorCompleto.idHabitante,
+        categoriasIds: (vendedorCompleto.categorias || []).map((c) => c.idCategoria),
+      });
+      await fetchVendedores(vendedoresState.page, vendedoresState.limit);
+      return actualizado;
+    },
+    [fetchVendedores, vendedoresState.page, vendedoresState.limit]
+  );
+
+  /**
+   * Valida un vendedor y registra el resultado en historial.
+   * @async
+   * @param {string} tipoBusqueda - Tipo de búsqueda.
+   * @param {string} valor - Valor a validar.
+   * @returns {Promise<Object|null>} Vendedor encontrado o null.
+   */
+  const validarVendedor = useCallback(async (tipoBusqueda, valor) => {
+    const found = await vendedoresApi.validar(tipoBusqueda, valor);
+    setHistorialVendedores((prev) => [
+      {
+        nombre: found ? found.nombre : valor,
+        detalle: found ? (found.categorias || []).map((c) => c.nombre).join(', ') : 'No encontrado',
+        resultado: found && found.estadoActivo === 'VIGENTE' ? 'vigente' : 'expirado',
+        hace: 'hace unos segundos',
+      },
+      ...prev,
+    ].slice(0, 6));
+    return found;
+  }, []);
+
+  // ─── Operaciones: Categorías ───────────────────────────────────────────────
+
+  /**
+   * Crea una categoría y refresca la lista.
+   * @async
+   * @param {Object} data - Datos de la categoría.
+   * @returns {Promise<Object>} Categoría creada.
+   */
+  const addCategoria = useCallback(
+    async (data) => {
+      const nueva = await categoriasApi.crear(data);
+      await fetchCategorias(categoriasState.page, categoriasState.limit);
+      return nueva;
+    },
+    [fetchCategorias, categoriasState.page, categoriasState.limit]
+  );
+
+  /**
+   * Actualiza una categoría y refresca la lista.
+   * @async
+   * @param {number|string} id - ID de la categoría.
+   * @param {Object} data - Campos a actualizar.
+   * @returns {Promise<Object>} Categoría actualizada.
+   */
+  const updateCategoria = useCallback(
+    async (id, data) => {
+      const actualizada = await categoriasApi.actualizar(id, data);
+      await fetchCategorias(categoriasState.page, categoriasState.limit);
+      return actualizada;
+    },
+    [fetchCategorias, categoriasState.page, categoriasState.limit]
+  );
+
+  /**
+   * Desactiva una categoría.
+   * @async
+   * @param {Object} categoria - Categoría completa a desactivar.
+   */
+  const desactivarCategoria = useCallback(
+    async (categoria) => {
+      await categoriasApi.desactivar(categoria.idCategoria, categoria);
+      await fetchCategorias(categoriasState.page, categoriasState.limit);
+    },
+    [fetchCategorias, categoriasState.page, categoriasState.limit]
+  );
+
+  // ─── Value del contexto ────────────────────────────────────────────────────
+
+  /** @type {AppDataContextValue} */
+  const value = {
+    // Vehículos
+    vehiculos: vehiculosState.items,
+    vehiculosMeta: vehiculosState.metadata,
+    vehiculosPage: vehiculosState.page,
+    vehiculosLoading: vehiculosState.loading,
+    vehiculosError: vehiculosState.error,
+    fetchVehiculos,
+    addVehiculo,
+    updateVehiculo,
+    toggleVehiculoEstado,
+    obtenerVehiculo,
+    validarVehiculo,
+    historialVehiculos,
+
+    // Vendedores
+    vendedores: vendedoresState.items,
+    vendedoresMeta: vendedoresState.metadata,
+    vendedoresPage: vendedoresState.page,
+    vendedoresLoading: vendedoresState.loading,
+    vendedoresError: vendedoresState.error,
+    fetchVendedores,
+    addVendedor,
+    updateVendedor,
+    obtenerVendedor,
+    revocarVendedor,
+    validarVendedor,
+    historialVendedores,
+
+    // Categorías
+    categorias: categoriasState.items,
+    categoriasMeta: categoriasState.metadata,
+    categoriasPage: categoriasState.page,
+    categoriasLoading: categoriasState.loading,
+    categoriasError: categoriasState.error,
+    fetchCategorias,
+    addCategoria,
+    updateCategoria,
+    desactivarCategoria,
+  };
+
+  return <AppDataContext.Provider value={value}>{children}</AppDataContext.Provider>;
+}
+
+/**
+ * Hook para consumir el contexto global de datos.
+ * @returns {AppDataContextValue} Estado y acciones de datos.
+ * @throws {Error} Si se usa fuera de AppDataProvider.
+ */
+export function useAppData() {
+  const ctx = useContext(AppDataContext);
+  if (!ctx) throw new Error('useAppData debe usarse dentro de AppDataProvider');
+  return ctx;
+}
+</file>
+
+<file path="gatillos/useAuth.js">
+/**
+ * @fileoverview Hook y Provider para gestión de autenticación basada en roles.
+ * Actualmente no utiliza login real; el usuario selecciona su rol (validador/administrador).
+ * @module hooks/useAuth
+ */
+
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { STORAGE_KEYS } from '../utilidades/config';
+
+/**
+ * Contexto de autenticación.
+ * @type {React.Context<AuthContextValue|null>}
+ */
+const AuthContext = createContext(null);
+
+/**
+ * Provider que envuelve la aplicación y mantiene el estado de autenticación.
+ * @param {Object} props
+ * @param {React.ReactNode} props.children - Componentes hijos.
+ * @returns {JSX.Element}
+ */
+export function AuthProvider({ children }) {
+  const [userRole, setUserRole] = useState(null);
+  const [token, setToken] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  /**
+   * Carga el rol y token almacenados en AsyncStorage al iniciar la app.
+   * @async
+   */
+  const cargarAuth = useCallback(async () => {
+    try {
+      const [storedRole, storedToken] = await Promise.all([
+        AsyncStorage.getItem(STORAGE_KEYS.userRole),
+        AsyncStorage.getItem(STORAGE_KEYS.authToken),
+      ]);
+      if (storedRole) setUserRole(storedRole);
+      if (storedToken) setToken(storedToken);
+    } catch (error) {
+      console.error('Error cargando auth:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /** Efecto de montura: restaura sesión previa si existe. */
+  useEffect(() => {
+    cargarAuth();
+  }, [cargarAuth]);
+
+  /**
+   * Guarda el rol y token en almacenamiento local.
+   * @async
+   * @param {string} role - Rol seleccionado ('validador' | 'administrador').
+   * @param {string} [authToken] - Token de autenticación opcional.
+   * @returns {{success: boolean, error?: string}} Resultado de la operación.
+   */
+  const setAuth = async (role, authToken) => {
+    try {
+      await Promise.all([
+        AsyncStorage.setItem(STORAGE_KEYS.userRole, role),
+        authToken ? AsyncStorage.setItem(STORAGE_KEYS.authToken, authToken) : Promise.resolve(),
+      ]);
+      setUserRole(role);
+      if (authToken) setToken(authToken);
+      return { success: true };
+    } catch (error) {
+      console.error('Error guardando auth:', error);
+      return { success: false, error: error.message };
+    }
+  };
+
+  /**
+   * Elimina las credenciales almacenadas y limpia el estado.
+   * @async
+   */
+  const clearAuth = async () => {
+    try {
+      await Promise.all([
+        AsyncStorage.removeItem(STORAGE_KEYS.userRole),
+        AsyncStorage.removeItem(STORAGE_KEYS.authToken),
+      ]);
+      setUserRole(null);
+      setToken(null);
+    } catch (error) {
+      console.error('Error limpiando auth:', error);
+    }
+  };
+
+  /** @type {AuthContextValue} */
+  const value = {
+    userRole,
+    token,
+    loading,
+    setAuth,
+    clearAuth,
+    isAuthenticated: !!userRole,
+    cargarAuth,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+/**
+ * Hook para consumir el contexto de autenticación.
+ * @returns {AuthContextValue} Estado y acciones de autenticación.
+ * @throws {Error} Si se usa fuera de AuthProvider.
+ */
+export function useAuth() {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth debe usarse dentro de un AuthProvider');
+  }
+  return context;
+}
+</file>
+
+<file path="pantallas/CategoriaFormulario.jsx">
+/**
+ * @fileoverview Formulario de creación y edición de categorías.
+ * @module pantallas/CategoriaFormulario
+ */
+
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, ActivityIndicator, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppData } from '../gatillos/useAppData';
+import { COLORS } from '../utilidades/config';
+
+/**
+ * Pantalla de formulario para categorías.
+ * @param {Object} props
+ * @param {Object} props.route - Contiene `item` en modo edición.
+ * @param {Object} props.navigation - Navegación.
+ * @returns {JSX.Element}
+ */
+export default function CategoriaFormulario({ route, navigation }) {
+  const { addCategoria, updateCategoria } = useAppData();
+  const { item } = route.params || {};
+  const editando = !!item;
+
+  const [nombre, setNombre] = useState(item?.nombre || '');
+  const [descripcion, setDescripcion] = useState(item?.descripcion || '');
+  const [error, setError] = useState('');
+  const [guardando, setGuardando] = useState(false);
+
+  /**
+   * Valida y envía el formulario.
+   * @async
+   */
+  const handleSubmit = async () => {
+    if (!nombre.trim()) {
+      setError('El nombre es requerido');
+      return;
+    }
+    setGuardando(true);
+    setError('');
+    try {
+      if (editando) {
+        await updateCategoria(item.idCategoria, { nombre: nombre.trim(), descripcion: descripcion.trim() });
+      } else {
+        await addCategoria({ nombre: nombre.trim(), descripcion: descripcion.trim() });
+      }
+      navigation.goBack();
+    } catch (err) {
+      setError('Error al guardar la categoría');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitulo}>{editando ? 'Editar Categoría' : 'Nueva Categoría'}</Text>
+        <View style={{ width: 44 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.form}>
+          <View style={styles.campo}>
+            <Text style={styles.label}>Nombre *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. Bebidas naturales"
+              value={nombre}
+              onChangeText={setNombre}
+            />
+          </View>
+
+          <View style={styles.campo}>
+            <Text style={styles.label}>Descripción</Text>
+            <TextInput
+              style={[styles.input, styles.inputMultiline]}
+              placeholder="Breve descripción…"
+              value={descripcion}
+              onChangeText={setDescripcion}
+              multiline
+              numberOfLines={3}
+            />
+          </View>
+
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <View style={styles.btnContainer}>
+            <TouchableOpacity style={styles.btnSecundario} onPress={() => navigation.goBack()}>
+              <Text style={styles.btnSecundarioTexto}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.btnPrimario, guardando && styles.btnDisabled]} onPress={handleSubmit} disabled={guardando}>
+              <Text style={styles.btnPrimarioTexto}>{guardando ? 'Guardando…' : (editando ? 'Actualizar' : 'Crear')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  backBtn: { padding: 4 },
+  headerTitulo: { fontSize: 18, fontWeight: '700', color: COLORS.text, flex: 1, textAlign: 'center' },
+  scrollContent: { padding: 16, paddingBottom: 40 },
+  form: { gap: 16 },
+  campo: { gap: 6 },
+  label: { fontSize: 12, fontWeight: '500', color: '#666' },
+  input: { height: 48, borderWidth: 1, borderColor: '#d1c9b8', borderRadius: 8, paddingHorizontal: 14, fontSize: 15, backgroundColor: '#faf8f4', color: '#333' },
+  inputMultiline: { height: 100, paddingTop: 10, textAlignVertical: 'top' },
+  error: { fontSize: 12, color: COLORS.danger, textAlign: 'center' },
+  btnContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24, gap: 12 },
+  btnPrimario: { flex: 1, height: 48, borderRadius: 8, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  btnPrimarioTexto: { fontSize: 15, fontWeight: '600', color: COLORS.white },
+  btnSecundario: { flex: 1, height: 48, borderRadius: 8, backgroundColor: COLORS.white, borderWidth: 1, borderColor: '#d1c9b8', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  btnSecundarioTexto: { fontSize: 15, fontWeight: '600', color: '#666' },
+  btnDisabled: { opacity: 0.6 },
+});
+</file>
+
+<file path="pantallas/CategoriasLista.jsx">
+/**
+ * @fileoverview Listado paginado de categorías con búsqueda y desactivación.
+ * @module pantallas/CategoriasLista
+ */
+
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppData } from '../gatillos/useAppData';
+import { COLORS } from '../utilidades/config';
+
+/**
+ * Pantalla de gestión de categorías.
+ * @param {Object} props
+ * @param {Object} props.navigation - Navegación.
+ * @returns {JSX.Element}
+ */
+export default function CategoriasLista({ navigation }) {
+  const { 
+    categorias, 
+    categoriasMeta, 
+    categoriasPage, 
+    categoriasLoading, 
+    fetchCategorias, 
+    desactivarCategoria 
+  } = useAppData();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  /** Filtra categorías por nombre en la página actual. */
+  const visibles = categorias.filter(c => 
+    c.nombre.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  /** Carga inicial. */
+  useEffect(() => {
+    fetchCategorias(1);
+  }, [fetchCategorias]);
+
+  /**
+   * Cambia de página.
+   * @param {number} page - Página destino.
+   */
+  const handlePageChange = (page) => {
+    fetchCategorias(page);
+  };
+
+  /**
+   * Muestra alerta de confirmación antes de desactivar.
+   * @param {Object} categoria - Categoría a desactivar.
+   */
+  const handleEliminar = (categoria) => {
+    Alert.alert('Confirmar', '¿Desactivar esta categoría?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Desactivar', style: 'destructive', onPress: async () => {
+        try {
+          await desactivarCategoria(categoria);
+        } catch (error) {
+          Alert.alert('Error', 'Error al desactivar');
+        }
+      }}
+    ]);
+  };
+
+  if (categoriasLoading && categoriasPage === 1) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Cargando categorías...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.titulo}>Gestión de Categorías</Text>
+        <TouchableOpacity style={styles.btnNuevo} onPress={() => navigation.navigate('CategoriaFormulario')}>
+          <Ionicons name="add" size={20} color={COLORS.white} style={{ marginRight: 6 }} />
+          <Text style={styles.btnNuevoTexto}>Nueva</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Buscar categorías..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
+      <FlatList
+        data={visibles}
+        keyExtractor={(item) => item.idCategoria.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('CategoriaFormulario', { item })}>
+            <View style={styles.cellIcon}>
+              <Ionicons name="tag" size={24} color={COLORS.primary} />
+            </View>
+            <View style={styles.cellInfo}>
+              <Text style={styles.cellNombre}>{item.nombre}</Text>
+              {item.descripcion ? <Text style={styles.cellDesc}>{item.descripcion}</Text> : null}
+            </View>
+            <View style={styles.cellCount}>
+              <Text style={styles.cellCountText}>{item.vehiculos_count || 0} vehículos</Text>
+            </View>
+            <View style={styles.cellAcciones}>
+              <TouchableOpacity onPress={() => handleEliminar(item)} style={styles.actionBtn}>
+                <Ionicons name="trash" size={20} color={COLORS.danger} />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="grid-off" size={64} color={COLORS.gray} />
+            <Text style={styles.emptyText}>No hay categorías</Text>
+          </View>
+        }
+      />
+
+      {categoriasMeta && categoriasMeta.totalPages > 1 && (
+        <View style={styles.pager}>
+          <Text style={styles.pagerText}>
+            {categoriasMeta ? `Página ${categoriasMeta.currentPage} de ${categoriasMeta.totalPages} · Total ${categoriasMeta.totalItems}` : '—'}
+          </Text>
+          <View style={styles.pagerButtons}>
+            <TouchableOpacity style={[styles.pagerBtn, !categoriasMeta?.prevPage && styles.pagerBtnDisabled]} onPress={() => handlePageChange(categoriasPage - 1)} disabled={!categoriasMeta?.prevPage}>
+              <Text style={styles.pagerBtnText}>← Anterior</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.pagerBtn, styles.pagerBtnActive]}>
+              <Text style={[styles.pagerBtnText, { color: COLORS.white }]}>{categoriasPage}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.pagerBtn, !categoriasMeta?.nextPage && styles.pagerBtnDisabled]} onPress={() => handlePageChange(categoriasPage + 1)} disabled={!categoriasMeta?.nextPage}>
+              <Text style={styles.pagerBtnText}>Siguiente →</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  titulo: { fontSize: 20, fontWeight: '700', color: COLORS.text },
+  btnNuevo: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: COLORS.primary },
+  btnNuevoTexto: { fontSize: 13, fontWeight: '600', color: COLORS.white },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, color: COLORS.gray },
+  searchRow: { padding: 16, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
+  searchInput: { height: 40, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 14, backgroundColor: COLORS.background, color: COLORS.text },
+  row: { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 12, borderBottomWidth: 0.5, borderBottomColor: COLORS.border, alignItems: 'center' },
+  cellIcon: { width: 56, height: 56, borderRadius: 12, backgroundColor: '#fef3c7', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  cellInfo: { flex: 1 },
+  cellNombre: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  cellDesc: { fontSize: 12, color: COLORS.gray, marginTop: 2 },
+  cellCount: { width: 80, alignItems: 'center' },
+  cellCountText: { fontSize: 12, color: COLORS.gray },
+  cellAcciones: { width: 40, alignItems: 'center' },
+  actionBtn: { padding: 8 },
+  listContent: { paddingBottom: 20 },
+  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  emptyText: { marginTop: 12, fontSize: 14, color: COLORS.gray },
+  pager: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, backgroundColor: COLORS.background, borderTopWidth: 0.5, borderTopColor: COLORS.border },
+  pagerText: { fontSize: 11, color: COLORS.gray },
+  pagerButtons: { flexDirection: 'row', gap: 4 },
+  pagerBtn: { height: 28, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, justifyContent: 'center' },
+  pagerBtnActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  pagerBtnDisabled: { opacity: 0.4 },
+  pagerBtnText: { fontSize: 11, color: COLORS.gray },
+});
+</file>
+
+<file path="pantallas/Dashboard.jsx">
+/**
+ * @fileoverview Dashboard principal con estadísticas y accesos rápidos.
+ * Muestra conteos de vehículos, vendedores, categorías y lista reciente.
+ * @module pantallas/Dashboard
+ */
+
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppData } from '../gatillos/useAppData';
+import { colorHexDe } from '../utilidades/uiOptions';
+import { COLORS } from '../utilidades/config';
+
+/**
+ * Pantalla de inicio con métricas y navegación rápida.
+ * @param {Object} props
+ * @param {Object} props.navigation - Navegación de React Navigation.
+ * @returns {JSX.Element}
+ */
+export default function Dashboard({ navigation }) {
+  const { 
+    vehiculos, 
+    vendedores, 
+    categorias, 
+    vehiculosLoading, 
+    vendedoresLoading, 
+    categoriasLoading, 
+    fetchVehiculos, 
+    fetchVendedores, 
+    fetchCategorias 
+  } = useAppData();
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  /** Carga inicial de datos al montar el componente. */
+  useEffect(() => {
+    fetchVehiculos(1);
+    fetchVendedores(1);
+    fetchCategorias(1);
+  }, [fetchVehiculos, fetchVendedores, fetchCategorias]);
+
+  /**
+   * Refresca manualmente los tres conjuntos de datos.
+   * Mantiene el spinner al menos 1 segundo para feedback visual.
+   */
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchVehiculos(1);
+    fetchVendedores(1);
+    fetchCategorias(1);
+    setTimeout(() => setRefreshing(false), 1000);
+  };
+
+  const vigentes = vehiculos.filter(v => v.estadoActivo === 'VIGENTE').length;
+  const revocados = vehiculos.filter(v => v.estadoActivo !== 'VIGENTE').length;
+
+  if (vehiculosLoading || vendedoresLoading || categoriasLoading) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Cargando...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.titulo}>Dashboard</Text>
+      </View>
+
+      <View style={styles.statsGrid}>
+        <View style={[styles.statCard, { borderColor: COLORS.primary }]}>
+          <Text style={styles.statNumero}>{vehiculos.length}</Text>
+          <Text style={styles.statLabel}>Total Vehículos</Text>
+        </View>
+        <View style={[styles.statCard, { borderColor: COLORS.success }]}>
+          <Text style={[styles.statNumero, { color: COLORS.success }]}>{vigentes}</Text>
+          <Text style={styles.statLabel}>Vigentes</Text>
+        </View>
+        <View style={[styles.statCard, { borderColor: COLORS.danger }]}>
+          <Text style={[styles.statNumero, { color: COLORS.danger }]}>{revocados}</Text>
+          <Text style={styles.statLabel}>Revocados</Text>
+        </View>
+        <View style={[styles.statCard, { borderColor: '#0ea5e9' }]}>
+          <Text style={[styles.statNumero, { color: '#0ea5e9' }]}>{vendedores.length}</Text>
+          <Text style={styles.statLabel}>Vendedores</Text>
+        </View>
+        <View style={[styles.statCard, { borderColor: '#8b5cf6' }]}>
+          <Text style={[styles.statNumero, { color: '#8b5cf6' }]}>{categorias.length}</Text>
+          <Text style={styles.statLabel}>Categorías</Text>
+        </View>
+      </View>
+
+      <View style={styles.quickActions}>
+        <Text style={styles.sectionTitle}>Accesos Rápidos</Text>
+        <View style={styles.actionsGrid}>
+          <TouchableOpacity style={[styles.actionCard, { borderColor: COLORS.primary }]} onPress={() => navigation.navigate('Validar')}>
+            <Ionicons name="qr-code" size={28} color={COLORS.primary} />
+            <Text style={{ color: COLORS.primary }}>Validar Vehículo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionCard, { borderColor: '#0ea5e9' }]} onPress={() => navigation.navigate('Validar')}>
+            <Ionicons name="person-add" size={28} color="#0ea5e9" />
+            <Text style={{ color: '#0ea5e9' }}>Validar Vendedor</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionCard, { borderColor: '#22c55e' }]} onPress={() => navigation.navigate('VehiculoFormulario')}>
+            <Ionicons name="add-circle" size={28} color="#22c55e" />
+            <Text style={{ color: '#22c55e' }}>Nuevo Vehículo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionCard, { borderColor: '#8b5cf6' }]} onPress={() => navigation.navigate('Reportes')}>
+            <Ionicons name="document-text" size={28} color="#8b5cf6" />
+            <Text style={{ color: '#8b5cf6' }}>Ver Reportes</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <View style={styles.recentSection}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Vehículos Recientes</Text>
+          <TouchableOpacity onPress={() => navigation.navigate('Vehiculos')}>
+            <Text style={styles.verTodos}>Ver todos</Text>
+          </TouchableOpacity>
+        </View>
+        {vehiculos.slice(0, 5).map(v => (
+          <View key={v.idVehiculo} style={styles.recentItem}>
+            <View style={[styles.recentIcon, { backgroundColor: colorHexDe(v.color) + '20' }]}>
+              <Ionicons name="car" size={24} color={colorHexDe(v.color)} />
+            </View>
+            <View style={styles.recentInfo}>
+              <Text style={styles.recentTitle}>{v.marca} {v.modelo}</Text>
+              <Text style={styles.recentSubtitle}>{v.placa} · {v.color}</Text>
+            </View>
+            <View style={[styles.badge, { backgroundColor: v.estadoActivo === 'VIGENTE' ? '#d1fae5' : '#fee2e2' }]}>
+              <Text style={{ color: v.estadoActivo === 'VIGENTE' ? COLORS.success : COLORS.danger, fontSize: 10, fontWeight: '600' }}>
+                {v.estadoActivo}
+              </Text>
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background, padding: 16 },
+  header: { marginBottom: 20 },
+  titulo: { fontSize: 24, fontWeight: '700', color: COLORS.text },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, color: COLORS.gray },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', marginBottom: 24 },
+  statCard: { width: '30%', padding: 16, backgroundColor: COLORS.white, borderRadius: 12, borderWidth: 2, alignItems: 'center' },
+  statNumero: { fontSize: 24, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
+  statLabel: { fontSize: 11, color: COLORS.gray, textAlign: 'center' },
+  quickActions: { marginBottom: 24 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: COLORS.text, marginBottom: 12 },
+  actionsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  actionCard: { width: '48%', aspectRatio: 1, borderWidth: 2, borderRadius: 16, padding: 16, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.white },
+  recentSection: { marginTop: 16 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  verTodos: { fontSize: 14, color: COLORS.primary, fontWeight: '500' },
+  recentItem: { flexDirection: 'row', alignItems: 'center', padding: 12, backgroundColor: COLORS.white, borderRadius: 10, marginBottom: 8, borderWidth: 1, borderColor: COLORS.border },
+  recentIcon: { width: 48, height: 48, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  recentInfo: { flex: 1 },
+  recentTitle: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  recentSubtitle: { fontSize: 12, color: COLORS.gray, marginTop: 2 },
+  badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start' },
+});
+</file>
+
+<file path="pantallas/RoleSelection.jsx">
+/**
+ * @fileoverview Pantalla de selección de rol.
+ * No requiere credenciales; el usuario elige entre Validador o Administrador.
+ * El rol se persiste en AsyncStorage vía useAuth.
+ * @module pantallas/RoleSelection
+ */
+
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '../gatillos/useAuth';
+import { COLORS } from '../utilidades/config';
+
+/**
+ * Pantalla inicial para seleccionar el rol de acceso.
+ * @param {Object} props
+ * @param {Object} props.navigation - Objeto de navegación de React Navigation.
+ * @returns {JSX.Element}
+ */
+export default function RoleSelection({ navigation }) {
+  const { loading, setAuth, userRole } = useAuth();
+
+  /**
+   * Efecto de redirección: si ya existe un rol almacenado,
+   * navega automáticamente al área principal.
+   */
+  useEffect(() => {
+    if (userRole && !loading) {
+      navigation.navigate('AppInterno');
+    }
+  }, [userRole, loading, navigation]);
+
+  /**
+   * Guarda el rol seleccionado y navega a la aplicación.
+   * @async
+   * @param {string} role - 'validador' o 'administrador'.
+   */
+  const handleSetRole = async (role) => {
+    const result = await setAuth(role);
+    if (result.success) {
+      navigation.navigate('AppInterno');
+    }
+  };
+
+  /** Estado de carga mientras se lee AsyncStorage. */
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Cargando...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.logoContainer}>
+          <Ionicons name="people-circle" size={80} color={COLORS.primary} />
+        </View>
+        <Text style={styles.title}>GESTOR COMUNIDAD</Text>
+        <Text style={styles.subtitle}>Selecciona tu rol para continuar</Text>
+
+        <View style={styles.buttonsContainer}>
+          <TouchableOpacity
+            style={[styles.roleButton, { borderColor: COLORS.primary }]}
+            onPress={() => handleSetRole('validador')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="qr-code" size={28} color={COLORS.primary} style={styles.roleIcon} />
+            <View style={styles.roleTextContainer}>
+              <Text style={styles.roleButtonTitle}>Entrar como Validador</Text>
+              <Text style={styles.roleButtonSubtitle}>Validar vehículos y vendedores</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.roleButton, { borderColor: COLORS.primary }]}
+            onPress={() => handleSetRole('administrador')}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="settings" size={28} color={COLORS.primary} style={styles.roleIcon} />
+            <View style={styles.roleTextContainer}>
+              <Text style={styles.roleButtonTitle}>Entrar como Administrador</Text>
+              <Text style={styles.roleButtonSubtitle}>Gestión completa del sistema</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.footer}>
+          <Text style={styles.versionText}>GESTOR COMUNIDAD v1.0.0</Text>
+        </View>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: COLORS.background,
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+  },
+  content: {
+    alignItems: 'center',
+    gap: 24,
+  },
+  logoContainer: {
+    marginBottom: 8,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: COLORS.text,
+    letterSpacing: 1,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: COLORS.gray,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  buttonsContainer: {
+    width: '100%',
+    gap: 16,
+  },
+  roleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: COLORS.white,
+    borderRadius: 16,
+    borderWidth: 2,
+    gap: 16,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+  },
+  roleIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: COLORS.primary + '15',
+    textAlign: 'center',
+    lineHeight: 48,
+  },
+  roleTextContainer: {
+    flex: 1,
+  },
+  roleButtonTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.text,
+  },
+  roleButtonSubtitle: {
+    fontSize: 12,
+    color: COLORS.gray,
+    marginTop: 2,
+  },
+  footer: {
+    marginTop: 'auto',
+    paddingBottom: 32,
+  },
+  versionText: {
+    fontSize: 11,
+    color: COLORS.gray,
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: COLORS.gray,
+  },
+});
+</file>
+
+<file path="pantallas/ValidarVehiculo.jsx">
+/**
+ * @fileoverview Pantalla de validación de vehículos por QR o placa.
+ * Incluye escaneo de códigos QR mediante expo-camera.
+ * @module pantallas/ValidarVehiculo
+ */
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, TextInput, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { CameraView, Camera } from 'expo-camera';
+import { useAppData } from '../gatillos/useAppData';
+import { getErrorMessage } from '../servicios/api';
+import { colorHexDe } from '../utilidades/uiOptions';
+import { COLORS } from '../utilidades/config';
+import { useAuth } from '../gatillos/useAuth';
+
+/**
+ * Pantalla de validación de vehículos.
+ * @param {Object} props
+ * @param {Object} props.navigation - Navegación.
+ * @returns {JSX.Element}
+ */
+export default function ValidarVehiculo({ navigation }) {
+  const { validarVehiculo } = useAppData();
+  const { clearAuth } = useAuth();
+  const [tipoBusqueda, setTipoBusqueda] = useState('placa');
+  const [valor, setValor] = useState('');
+  const [resultado, setResultado] = useState(null);
+  const [buscado, setBuscado] = useState(false);
+  const [buscando, setBuscando] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [historial, setHistorial] = useState([]);
+  const [escaneando, setEscaneando] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState(null);
+
+  /**
+   * Solicita permiso de cámara y abre el escáner si se concede.
+   * @async
+   */
+  const handleAbrirCamara = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    setHasCameraPermission(status === 'granted');
+    if (status === 'granted') {
+      setEscaneando(true);
+    } else {
+      Alert.alert('Permiso requerido', 'Debes permitir el acceso a la cámara para escanear códigos QR.');
+    }
+  };
+
+  /**
+   * Ejecuta la validación y actualiza el historial local.
+   * @async
+   * @param {string} val - Valor a validar.
+   */
+  const ejecutarValidacion = async (val) => {
+    if (!val.trim()) return;
+    setBuscando(true);
+    setErrorMsg('');
+    setBuscado(false);
+    setResultado(null);
+    try {
+      const found = await validarVehiculo(tipoBusqueda, val.trim());
+      setResultado(found);
+      setBuscado(true);
+      setHistorial((prev) => [
+        {
+          placa: found ? found.placa : val,
+          detalle: found ? `${found.modelo} · ${found.color}` : 'No encontrado',
+          resultado: found && found.estadoActivo === 'VIGENTE' ? 'valido' : 'invalido',
+          hace: 'hace unos segundos',
+        },
+        ...prev,
+      ].slice(0, 6));
+    } catch (err) {
+      setErrorMsg(getErrorMessage(err));
+      setBuscado(true);
+    } finally {
+      setBuscando(false);
+    }
+  };
+
+  const handleBuscar = async () => {
+    await ejecutarValidacion(valor);
+  };
+
+  /**
+   * Maneja el escaneo exitoso de un código de barras/QR.
+   * @param {Object} scanningResult
+   * @param {string} scanningResult.data - Contenido del código escaneado.
+   */
+  const handleBarCodeScanned = ({ data }) => {
+    setEscaneando(false);
+    setValor(data);
+    setTipoBusqueda('qr');
+    ejecutarValidacion(data);
+  };
+
+  const esValido = resultado && resultado.estadoActivo === 'VIGENTE';
+
+  // Vista de cámara
+  if (escaneando) {
+    if (hasCameraPermission === null) {
+      return (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Solicitando permiso de cámara...</Text>
+        </View>
+      );
+    }
+    if (hasCameraPermission === false) {
+      return (
+        <View style={styles.loading}>
+          <Ionicons name="camera-off" size={48} color={COLORS.gray} />
+          <Text style={styles.loadingText}>Se necesita permiso para usar la cámara</Text>
+          <TouchableOpacity style={styles.btnBuscar} onPress={handleAbrirCamara}>
+            <Text style={styles.btnBuscarTexto}>Conceder permiso</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.btnBuscar, { marginTop: 10, backgroundColor: COLORS.gray }]} onPress={() => setEscaneando(false)}>
+            <Text style={styles.btnBuscarTexto}>Cancelar</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.cameraContainer}>
+        <CameraView
+          style={styles.camera}
+          facing="back"
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={handleBarCodeScanned}
+        >
+          <View style={styles.cameraOverlay}>
+            <View style={styles.scanFrame} />
+            <Text style={styles.cameraHint}>Enfoca el código QR dentro del recuadro</Text>
+          </View>
+        </CameraView>
+        <TouchableOpacity style={styles.cameraCloseBtn} onPress={() => setEscaneando(false)}>
+          <Ionicons name="close-circle" size={48} color={COLORS.white} />
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <View style={styles.header}>
+        <View style={{ width: 44 }} />
+        <Text style={styles.headerTitulo}>Validar Vehículo</Text>
+        <TouchableOpacity onPress={clearAuth} style={styles.backBtn}>
+          <Ionicons name="log-out-outline" size={24} color={COLORS.danger} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.scanSection}>
+          <Text style={styles.sectionTitle}>Escanear QR</Text>
+          <Text style={styles.sectionSubtitle}>Apunta la cámara al código QR del vehículo</Text>
+          <TouchableOpacity style={styles.scanArea} onPress={handleAbrirCamara} activeOpacity={0.8}>
+            <View style={[styles.scanCorner, { top: 6, left: 6, borderTopWidth: 2, borderLeftWidth: 2 }]} />
+            <View style={[styles.scanCorner, { top: 6, right: 6, borderTopWidth: 2, borderRightWidth: 2 }]} />
+            <View style={[styles.scanCorner, { bottom: 6, left: 6, borderBottomWidth: 2, borderLeftWidth: 2 }]} />
+            <View style={[styles.scanCorner, { bottom: 6, right: 6, borderBottomWidth: 2, borderRightWidth: 2 }]} />
+            <Ionicons name="qr-code" size={48} color={COLORS.primary} />
+            <Text style={styles.scanTapText}>Toca para abrir la cámara</Text>
+          </TouchableOpacity>
+          <Text style={styles.scanHint}>— o busca manualmente abajo —</Text>
+        </View>
+
+        <View style={styles.manualSection}>
+          <Text style={styles.sectionTitle}>Búsqueda Manual</Text>
+          <View style={styles.manualRow}>
+            <TouchableOpacity
+              style={[styles.tipoBtn, tipoBusqueda === 'placa' && styles.tipoBtnActivo]}
+              onPress={() => setTipoBusqueda('placa')}
+            >
+              <Text style={[styles.tipoBtnTexto, tipoBusqueda === 'placa' && styles.tipoBtnTextoActivo]}>Placa</Text>
+            </TouchableOpacity>
+          </View>
+          <TextInput
+            style={styles.manualInput}
+            placeholder='Ej. ABC-1234' 
+            value={valor}
+            onChangeText={setValor}
+          />
+          <TouchableOpacity style={[styles.btnBuscar, buscando && styles.btnDisabled]} onPress={handleBuscar} disabled={buscando}>
+            <Text style={styles.btnBuscarTexto}>{buscando ? 'Buscando…' : 'Buscar'}</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.historialSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Últimas Verificaciones</Text>
+          </View>
+          {historial.length === 0 ? (
+            <Text style={styles.emptyHist}>Sin verificaciones aún.</Text>
+          ) : (
+            historial.map((h, i) => (
+              <View key={i} style={styles.histItem}>
+                <View style={styles.histRow}>
+                  <Text style={[styles.histPlaca, { fontFamily: 'monospace' }]}>{h.placa}</Text>
+                  {h.resultado === 'valido' ? (
+                    <View style={styles.badgeOk}>
+                      <Ionicons name="check" size={10} color={COLORS.success} />
+                      <Text style={styles.badgeTexto}>Válido</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.badgeErr}>
+                      <Ionicons name="close" size={10} color={COLORS.danger} />
+                      <Text style={[styles.badgeTexto, { color: COLORS.danger }]}>Inválido</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.histDetalle}>{h.hace} · {h.detalle}</Text>
+              </View>
+            ))
+          )}
+        </View>
+
+        {!buscado ? (
+          <View style={styles.emptyResultCard}>
+            <Ionicons name="qr-code" size={32} color={COLORS.gray} />
+            <Text style={styles.emptyResultText}>Escanea un QR o busca una placa para ver el resultado aquí.</Text>
+          </View>
+        ) : null}
+
+        {buscado && errorMsg ? (
+          <View style={styles.errorCard}>
+            <Ionicons name="alert-triangle" size={16} color={COLORS.danger} />
+            <Text style={styles.errorCardText}>{errorMsg}</Text>
+          </View>
+        ) : null}
+
+        {buscado && !errorMsg && !resultado ? (
+          <View style={styles.errorCard}>
+            <View style={styles.resultHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Resultado</Text>
+                <Text style={styles.sectionSubtitle}>Información del vehículo</Text>
+              </View>
+              <View style={styles.badgeErr}>
+                <Ionicons name="close" size={11} color={COLORS.danger} />
+                <Text style={styles.badgeTextoPequeño}>No encontrado</Text>
+              </View>
+            </View>
+            <Ionicons name="alert-triangle" size={16} color={COLORS.danger} />
+            <Text style={styles.errorCardText}>No existe ningún vehículo que coincida con ese dato.</Text>
+          </View>
+        ) : null}
+
+        {buscado && !errorMsg && resultado ? (
+          <View style={styles.resultCard}>
+            <View style={styles.resultHeader}>
+              <View>
+                <Text style={styles.sectionTitle}>Resultado</Text>
+                <Text style={styles.sectionSubtitle}>Información del vehículo</Text>
+              </View>
+              {esValido ? (
+                <View style={styles.badgeOk}>
+                  <Ionicons name="check" size={11} color={COLORS.success} />
+                  <Text style={styles.badgeTextoPequeño}>Vehículo vigente</Text>
+                </View>
+              ) : (
+                <View style={styles.badgeErr}>
+                  <Ionicons name="close" size={11} color={COLORS.danger} />
+                  <Text style={[styles.badgeTextoPequeño, { color: COLORS.danger }]}>{resultado.estadoActivo}</Text>
+                </View>
+              )}
+            </View>
+
+            {esValido ? (
+              <View style={styles.alertOk}>
+                <Ionicons name="shield-check" size={16} color={COLORS.success} />
+                <Text style={styles.alertOkText}>Vehículo autorizado para ingresar a la comunidad.</Text>
+              </View>
+            ) : (
+              <View style={styles.alertErr}>
+                <Ionicons name="shield-close" size={16} color={COLORS.danger} />
+                <Text style={styles.alertErrText}>Este vehículo no está vigente ({resultado.estadoActivo}). Evalúa negar el ingreso.</Text>
+              </View>
+            )}
+
+            <View style={styles.rows}>
+              <View style={styles.row}>
+                <View style={styles.rl}>
+                  <Ionicons name="id-badge" size={12} color={COLORS.gray} />
+                  <Text style={styles.rlText}>Placa</Text>
+                </View>
+                <Text style={[styles.rv, { fontFamily: 'monospace', fontWeight: '700' }]}>{resultado.placa}</Text>
+              </View>
+              <View style={styles.row}>
+                <View style={styles.rl}>
+                  <Ionicons name="car" size={12} color={COLORS.gray} />
+                  <Text style={styles.rlText}>Modelo</Text>
+                </View>
+                <Text style={styles.rv}>{resultado.modelo}</Text>
+              </View>
+              <View style={styles.row}>
+                <View style={styles.rl}>
+                  <Ionicons name="brush" size={12} color={COLORS.gray} />
+                  <Text style={styles.rlText}>Color</Text>
+                </View>
+                <View style={styles.rvColor}>
+                  <View style={[styles.colorSwatch, { backgroundColor: colorHexDe(resultado.color) }]} />
+                  <Text style={styles.rv}>{resultado.color}</Text>
+                </View>
+              </View>
+              <View style={styles.row}>
+                <View style={styles.rl}>
+                  <Ionicons name="person" size={12} color={COLORS.gray} />
+                  <Text style={styles.rlText}>Propietario</Text>
+                </View>
+                <Text style={styles.rv}>{resultado.nombrePropietario}</Text>
+              </View>
+              <View style={styles.row}>
+                <View style={styles.rl}>
+                  <Ionicons name="calendar" size={12} color={COLORS.gray} />
+                  <Text style={styles.rlText}>Vence</Text>
+                </View>
+                <Text style={styles.rv}>{resultado.fechaExpiracion}</Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  backBtn: { padding: 4 },
+  headerTitulo: { fontSize: 18, fontWeight: '700', color: COLORS.text, flex: 1, textAlign: 'center' },
+  scrollContent: { padding: 16, paddingBottom: 40, gap: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: COLORS.text, marginBottom: 8 },
+  sectionSubtitle: { fontSize: 12, color: COLORS.gray, marginTop: 2 },
+  scanSection: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, borderWidth: 0.5, borderColor: COLORS.border },
+  scanArea: { width: 180, height: 180, borderWidth: 1.5, borderColor: COLORS.primary, borderRadius: 12, backgroundColor: COLORS.background, alignItems: 'center', justifyContent: 'center', position: 'relative', marginBottom: 14, alignSelf: 'center' },
+  scanCorner: { position: 'absolute', width: 18, height: 18, borderColor: COLORS.primary },
+  scanTapText: { fontSize: 11, color: COLORS.primary, marginTop: 8, fontWeight: '600' },
+  scanHint: { fontSize: 11, color: COLORS.gray, textAlign: 'center', marginBottom: 12 },
+  manualSection: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, borderWidth: 0.5, borderColor: COLORS.border },
+  manualRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  tipoBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#d1c9b8', backgroundColor: '#faf8f4', alignItems: 'center' },
+  tipoBtnActivo: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  tipoBtnTexto: { fontSize: 13, fontWeight: '500', color: '#666' },
+  tipoBtnTextoActivo: { color: COLORS.white, fontWeight: '600' },
+  manualInput: { height: 44, borderWidth: 1, borderColor: '#d1c9b8', borderRadius: 8, paddingHorizontal: 12, fontSize: 14, backgroundColor: '#faf8f4', color: '#333', marginBottom: 12 },
+  btnBuscar: { height: 44, borderRadius: 8, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
+  btnBuscarTexto: { fontSize: 14, fontWeight: '600', color: COLORS.white },
+  btnDisabled: { opacity: 0.6 },
+  historialSection: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, borderWidth: 0.5, borderColor: COLORS.border },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  emptyHist: { padding: 16, textAlign: 'center', color: COLORS.gray, fontSize: 11 },
+  histItem: { padding: 9, borderBottomWidth: 0.5, borderBottomColor: '#f0e8d8' },
+  histRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  histPlaca: { fontSize: 12, fontWeight: '600', color: COLORS.text },
+  badgeOk: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, backgroundColor: '#EAF3DE' },
+  badgeErr: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, backgroundColor: '#FCEBEB' },
+  badgeTexto: { fontSize: 11, fontWeight: '500', color: COLORS.success },
+  badgeTextoPequeño: { fontSize: 11, fontWeight: '500', color: COLORS.success },
+  histDetalle: { fontSize: 11, color: COLORS.gray, marginTop: 2 },
+  emptyResultCard: { backgroundColor: COLORS.white, borderRadius: 12, padding: 24, alignItems: 'center', gap: 8, borderWidth: 0.5, borderColor: COLORS.border },
+  emptyResultText: { fontSize: 13, color: COLORS.gray, textAlign: 'center' },
+  errorCard: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, borderWidth: 0.5, borderColor: '#fecaca', gap: 8 },
+  errorCardText: { fontSize: 13, color: COLORS.text },
+  resultCard: { backgroundColor: COLORS.white, borderRadius: 12, borderWidth: 0.5, borderColor: COLORS.border, overflow: 'hidden' },
+  resultHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 0.5, borderBottomColor: '#f0e8d8', padding: 16 },
+  alertOk: { backgroundColor: '#EAF3DE', borderWidth: 0.5, borderColor: '#97C459', borderRadius: 8, margin: 12, padding: 9, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  alertOkText: { fontSize: 12, color: '#27500A', flex: 1 },
+  alertErr: { backgroundColor: '#FCEBEB', borderWidth: 0.5, borderColor: COLORS.danger, borderRadius: 8, margin: 12, padding: 9, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  alertErrText: { fontSize: 12, color: '#791F1F', flex: 1 },
+  rows: { paddingHorizontal: 16, paddingBottom: 16 },
+  row: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 7, borderBottomWidth: 0.5, borderBottomColor: '#f0e8d8' },
+  rl: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  rlText: { fontSize: 11, color: COLORS.gray },
+  rv: { fontSize: 12, fontWeight: '500', color: COLORS.text },
+  rvColor: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  colorSwatch: { width: 12, height: 12, borderRadius: 3, borderWidth: 0.5, borderColor: '#d1c9b8' },
+
+  // Cámara
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  loadingText: { fontSize: 14, color: COLORS.gray, textAlign: 'center', marginTop: 8 },
+  cameraContainer: { flex: 1, backgroundColor: '#000' },
+  camera: { flex: 1 },
+  cameraOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
+  scanFrame: { width: 220, height: 220, borderWidth: 2, borderColor: COLORS.primary, borderRadius: 12, backgroundColor: 'transparent' },
+  cameraHint: { color: COLORS.white, fontSize: 14, marginTop: 20, fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
+  cameraCloseBtn: { position: 'absolute', bottom: 40, alignSelf: 'center', zIndex: 10 },
+});
+</file>
+
+<file path="pantallas/ValidarVendedor.jsx">
+/**
+ * @fileoverview Pantalla de validación de vendedores por QR o búsqueda manual.
+ * Incluye escaneo de códigos QR mediante expo-camera.
+ * @module pantallas/ValidarVendedor
+ */
+import { useAuth } from '../gatillos/useAuth';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView, TextInput } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { CameraView, Camera } from 'expo-camera';
+import { useAppData } from '../gatillos/useAppData';
+import { vendedoresApi, getErrorMessage } from '../servicios/api';
+import { getInitials, getAvatarColors } from '../utilidades/uiOptions';
+import { COLORS } from '../utilidades/config';
+import Modal from '../componentes/Modal';
+
+/**
+ * Pantalla de validación de vendedores.
+ * @param {Object} props
+ * @param {Object} props.navigation - Navegación.
+ * @returns {JSX.Element}
+ */
+export default function ValidarVendedor({ navigation }) {
+  const { validarVendedor } = useAppData();
+  const { clearAuth } = useAuth();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedVendedor, setSelectedVendedor] = useState(null);
+  const [showValidationModal, setShowValidationModal] = useState(false);
+  const [validationData, setValidationData] = useState({ estado: 'validado', observaciones: '' });
+  const [validationLoading, setValidationLoading] = useState(false);
+  const [historial, setHistorial] = useState([]);
+  const [pendientes, setPendientes] = useState([]);
+  const [loadingPendientes, setLoadingPendientes] = useState(false);
+  const [escaneando, setEscaneando] = useState(false);
+  const [hasCameraPermission, setHasCameraPermission] = useState(null);
+  const [tipoBusqueda, setTipoBusqueda] = useState('cedula');
+
+  /**
+   * Solicita permiso de cámara y abre el escáner si se concede.
+   * @async
+   */
+  const handleAbrirCamara = async () => {
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    setHasCameraPermission(status === 'granted');
+    if (status === 'granted') {
+      setEscaneando(true);
+    } else {
+      Alert.alert('Permiso requerido', 'Debes permitir el acceso a la cámara para escanear códigos QR.');
+    }
+  };
+
+  /**
+   * Carga vendedores pendientes desde el backend.
+   * @async
+   */
+  const fetchPendingVendedores = async () => {
+    setLoadingPendientes(true);
+    try {
+      const params = { estado: 'pendiente', limit: 50 };
+      if (searchQuery) params.search = searchQuery;
+      const response = await vendedoresApi.listar(params);
+      setPendientes(response.data || []);
+    } catch (error) {
+      console.error('Error fetching pending vendedores:', error);
+    } finally {
+      setLoadingPendientes(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPendingVendedores();
+  }, [searchQuery]);
+
+  /**
+   * Ejecuta la validación y registra en historial.
+   * @async
+   * @param {string} val - Valor a validar.
+   */
+  const ejecutarValidacion = async (val) => {
+    try {
+      const found = await validarVendedor(tipoBusqueda, val.trim());
+      setHistorial((prev) => [
+        {
+          nombre: found ? found.nombre : val,
+          detalle: found ? (found.categorias || []).map((c) => c.nombre).join(', ') : 'No encontrado',
+          resultado: found?.estadoActivo === 'VIGENTE' ? 'vigente' : 'expirado',
+          hace: 'hace unos segundos',
+        },
+        ...prev,
+      ].slice(0, 6));
+      if (found) {
+        setSelectedVendedor(found);
+        setValidationData({ estado: 'validado', observaciones: '' });
+        setShowValidationModal(true);
+      } else {
+        Alert.alert('No encontrado', 'No existe un vendedor con ese dato.');
+      }
+    } catch (err) {
+      Alert.alert('Error', getErrorMessage(err));
+    }
+  };
+
+  /**
+   * Maneja el escaneo exitoso de QR.
+   * @param {Object} scanningResult
+   */
+  const handleBarCodeScanned = ({ data }) => {
+    setEscaneando(false);
+    setTipoBusqueda('qr');
+    ejecutarValidacion(data);
+  };
+
+  const openValidation = (vendedor) => {
+    setSelectedVendedor(vendedor);
+    setValidationData({ estado: 'validado', observaciones: '' });
+    setShowValidationModal(true);
+  };
+
+  const closeValidationModal = () => {
+    setShowValidationModal(false);
+    setSelectedVendedor(null);
+  };
+
+  const handleValidate = async (estado) => {
+    if (!selectedVendedor) return;
+    try {
+      setValidationLoading(true);
+      await vendedoresApi.actualizar(selectedVendedor.idVendedor, {
+        ...selectedVendedor,
+        estadoActivo: estado === 'validado' ? 'VIGENTE' : 'REVOCADA',
+        observaciones: validationData.observaciones,
+      });
+      Alert.alert('Éxito', `Vendedor ${estado === 'validado' ? 'validado' : 'rechazado'} correctamente`);
+      closeValidationModal();
+      fetchPendingVendedores();
+    } catch (error) {
+      Alert.alert('Error', getErrorMessage(error));
+    } finally {
+      setValidationLoading(false);
+    }
+  };
+
+  // Vista de cámara
+  if (escaneando) {
+    if (hasCameraPermission === null) {
+      return (
+        <View style={styles.loading}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={styles.loadingText}>Solicitando permiso de cámara...</Text>
+        </View>
+      );
+    }
+    if (hasCameraPermission === false) {
+      return (
+        <View style={styles.loading}>
+          <Ionicons name="camera-off" size={48} color={COLORS.gray} />
+          <Text style={styles.loadingText}>Se necesita permiso para usar la cámara</Text>
+          <TouchableOpacity style={styles.btnBuscar} onPress={handleAbrirCamara}>
+            <Text style={styles.btnBuscarTexto}>Conceder permiso</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.btnBuscar, { marginTop: 10, backgroundColor: COLORS.gray }]} onPress={() => setEscaneando(false)}>
+            <Text style={styles.btnBuscarTexto}>Cancelar</Text>
+          </TouchableOpacity>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.cameraContainer}>
+        <CameraView
+          style={styles.camera}
+          facing="back"
+          barcodeScannerSettings={{ barcodeTypes: ['qr'] }}
+          onBarcodeScanned={handleBarCodeScanned}
+        >
+          <View style={styles.cameraOverlay}>
+            <View style={styles.scanFrame} />
+            <Text style={styles.cameraHint}>Enfoca el código QR del vendedor</Text>
+          </View>
+        </CameraView>
+        <TouchableOpacity style={styles.cameraCloseBtn} onPress={() => setEscaneando(false)}>
+          <Ionicons name="close-circle" size={48} color={COLORS.white} />
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <View style={styles.header}>
+        <View style={{ width: 44 }} />
+        <Text style={styles.headerTitulo}>Validar Vendedores</Text>
+        <TouchableOpacity onPress={clearAuth} style={styles.backBtn}>
+          <Ionicons name="log-out-outline" size={24} color={COLORS.danger} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.scanSection}>
+          <Text style={styles.sectionTitle}>Escanear QR</Text>
+          <Text style={styles.sectionSubtitle}>Apunta la cámara al código QR del vendedor</Text>
+          <TouchableOpacity style={styles.scanArea} onPress={handleAbrirCamara} activeOpacity={0.8}>
+            <View style={[styles.scanCorner, { top: 6, left: 6, borderTopWidth: 2, borderLeftWidth: 2 }]} />
+            <View style={[styles.scanCorner, { top: 6, right: 6, borderTopWidth: 2, borderRightWidth: 2 }]} />
+            <View style={[styles.scanCorner, { bottom: 6, left: 6, borderBottomWidth: 2, borderLeftWidth: 2 }]} />
+            <View style={[styles.scanCorner, { bottom: 6, right: 6, borderBottomWidth: 2, borderRightWidth: 2 }]} />
+            <Ionicons name="qr-code" size={48} color={COLORS.primary} />
+            <Text style={styles.scanTapText}>Toca para abrir la cámara</Text>
+          </TouchableOpacity>
+          <Text style={styles.scanHint}>— o busca manualmente abajo —</Text>
+        </View>
+
+        <View style={styles.searchSection}>
+          <Text style={styles.sectionTitle}>Búsqueda Manual</Text>
+          <View style={styles.manualRow}>
+            <TouchableOpacity
+              style={[styles.tipoBtn, tipoBusqueda === 'cedula' && styles.tipoBtnActivo]}
+              onPress={() => setTipoBusqueda('cedula')}
+            >
+              <Text style={[styles.tipoBtnTexto, tipoBusqueda === 'cedula' && styles.tipoBtnTextoActivo]}>Cédula</Text>
+            </TouchableOpacity>
+          </View>
+          <TextInput
+            style={styles.searchInput}
+            placeholder= 'Buscar por cédula, nombre...'
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          <TouchableOpacity style={styles.btnBuscar} onPress={() => ejecutarValidacion(searchQuery)}>
+            <Text style={styles.btnBuscarTexto}>Buscar</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.historialSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Historial de Verificaciones</Text>
+          </View>
+          {historial.length === 0 ? (
+            <Text style={styles.emptyHist}>Sin verificaciones aún.</Text>
+          ) : (
+            historial.map((h, i) => (
+              <View key={i} style={styles.histItem}>
+                <View style={styles.histRow}>
+                  <View style={styles.histAvatar}>
+                    <View style={[styles.avatar, { backgroundColor: getAvatarColors(h.nombre).bg }]}>
+                      <Text style={[styles.avatarText, { color: getAvatarColors(h.nombre).color }]}>{getInitials(h.nombre)}</Text>
+                    </View>
+                    <Text style={styles.histNombre}>{h.nombre}</Text>
+                  </View>
+                  {h.resultado === 'vigente' ? (
+                    <View style={styles.badgeOk}>
+                      <Ionicons name="check" size={10} color={COLORS.success} />
+                      <Text style={styles.badgeTexto}>Vigente</Text>
+                    </View>
+                  ) : (
+                    <View style={styles.badgeErr}>
+                      <Ionicons name="close" size={10} color={COLORS.danger} />
+                      <Text style={[styles.badgeTexto, { color: COLORS.danger }]}>Expirado</Text>
+                    </View>
+                  )}
+                </View>
+                <Text style={styles.histDetalle}>{h.hace} · {h.detalle}</Text>
+              </View>
+            ))
+          )}
+        </View>
+
+        <View style={styles.pendientesSection}>
+          <Text style={styles.sectionTitle}>Vendedores Pendientes de Validación</Text>
+          {loadingPendientes ? (
+            <ActivityIndicator size="small" color={COLORS.primary} />
+          ) : pendientes.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="checkmark-circle" size={64} color={COLORS.primary} />
+              <Text style={styles.emptyTitle}>Sin vendedores pendientes</Text>
+              <Text style={styles.emptyText}>Todos los vendedores han sido validados</Text>
+            </View>
+          ) : (
+            pendientes.map((v) => (
+              <TouchableOpacity key={v.idVendedor} style={styles.pendienteRow} onPress={() => openValidation(v)}>
+                <View style={[styles.avatar, { backgroundColor: getAvatarColors(v.nombre).bg }]}>
+                  <Text style={[styles.avatarText, { color: getAvatarColors(v.nombre).color }]}>{getInitials(v.nombre)}</Text>
+                </View>
+                <View style={styles.pendienteInfo}>
+                  <Text style={styles.pendienteNombre}>{v.nombre}</Text>
+                  <Text style={styles.pendienteCedula}>{v.cedula}</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.gray} />
+              </TouchableOpacity>
+            ))
+          )}
+        </View>
+      </ScrollView>
+
+      <Modal visible={showValidationModal} animationType="slide" transparent={true} onRequestClose={closeValidationModal}>
+        {selectedVendedor && (
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.modalContainer}>
+            <View style={styles.modalContent}>
+              <View style={styles.vendedorPreview}>
+                <View style={styles.vendedorAvatarLarge}>
+                  <View style={[styles.avatarLarge, { backgroundColor: getAvatarColors(selectedVendedor.nombre).bg }]}>
+                    <Text style={[styles.avatarTextLarge, { color: getAvatarColors(selectedVendedor.nombre).color }]}>{getInitials(selectedVendedor.nombre)}</Text>
+                  </View>
+                </View>
+                <View style={styles.previewInfo}>
+                  <Text style={styles.previewTitle}>{selectedVendedor.nombre} {selectedVendedor.apellidos || ''}</Text>
+                  <Text style={styles.previewEmail}>{selectedVendedor.email}</Text>
+                  <Text style={styles.previewPhone}>{selectedVendedor.telefono || 'Sin teléfono'}</Text>
+                  <Text style={styles.previewDni}>DNI: {selectedVendedor.dni || 'N/A'}</Text>
+                  <Text style={styles.previewDireccion}>Dirección: {selectedVendedor.direccion || 'N/A'}</Text>
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Acción de Validación</Text>
+                <View style={styles.radioGroup}>
+                  <TouchableOpacity
+                    style={[styles.radioButton, validationData.estado === 'validado' && styles.radioButtonSelected]}
+                    onPress={() => setValidationData({ ...validationData, estado: 'validado' })}
+                  >
+                    <View style={[styles.radioCircle, validationData.estado === 'validado' && styles.radioCircleSelected]} />
+                    <Text style={[styles.radioLabel, validationData.estado === 'validado' && styles.radioLabelSelected]}>Validar</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.radioButton, validationData.estado === 'rechazado' && styles.radioButtonSelected]}
+                    onPress={() => setValidationData({ ...validationData, estado: 'rechazado' })}
+                  >
+                    <View style={[styles.radioCircle, validationData.estado === 'rechazado' && styles.radioCircleSelected]} />
+                    <Text style={[styles.radioLabel, validationData.estado === 'rechazado' && styles.radioLabelSelected]}>Rechazar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Observaciones</Text>
+                <TextInput
+                  style={styles.modalInput}
+                  placeholder="Observaciones opcionales..."
+                  value={validationData.observaciones}
+                  onChangeText={(value) => setValidationData({ ...validationData, observaciones: value })}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity style={styles.btnCancelar} onPress={closeValidationModal} disabled={validationLoading}>
+                  <Text style={styles.btnCancelarTexto}>Cancelar</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.btnConfirmar, validationData.estado === 'validado' ? styles.btnConfirmarPrimario : styles.btnConfirmarPeligro]}
+                  onPress={() => handleValidate(validationData.estado)}
+                  disabled={validationLoading}
+                >
+                  <Text style={styles.btnConfirmarTexto}>
+                    {validationLoading ? 'Procesando…' : (validationData.estado === 'validado' ? 'Validar Vendedor' : 'Rechazar Vendedor')}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        )}
+      </Modal>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  backBtn: { padding: 4 },
+  headerTitulo: { fontSize: 18, fontWeight: '700', color: COLORS.text, flex: 1, textAlign: 'center' },
+  scrollContent: { padding: 16, paddingBottom: 40, gap: 16 },
+  scanSection: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, borderWidth: 0.5, borderColor: COLORS.border },
+  sectionTitle: { fontSize: 16, fontWeight: '600', color: COLORS.text, marginBottom: 8 },
+  sectionSubtitle: { fontSize: 12, color: COLORS.gray, marginTop: 2 },
+  scanArea: { width: 180, height: 180, borderWidth: 1.5, borderColor: COLORS.primary, borderRadius: 12, backgroundColor: COLORS.background, alignItems: 'center', justifyContent: 'center', position: 'relative', marginBottom: 14, alignSelf: 'center' },
+  scanCorner: { position: 'absolute', width: 18, height: 18, borderColor: COLORS.primary },
+  scanTapText: { fontSize: 11, color: COLORS.primary, marginTop: 8, fontWeight: '600' },
+  scanHint: { fontSize: 11, color: COLORS.gray, textAlign: 'center', marginBottom: 12 },
+  searchSection: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, borderWidth: 0.5, borderColor: COLORS.border },
+  manualRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
+  tipoBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#d1c9b8', backgroundColor: '#faf8f4', alignItems: 'center' },
+  tipoBtnActivo: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  tipoBtnTexto: { fontSize: 13, fontWeight: '500', color: '#666' },
+  tipoBtnTextoActivo: { color: COLORS.white, fontWeight: '600' },
+  searchInput: { height: 44, borderWidth: 1, borderColor: '#d1c9b8', borderRadius: 8, paddingHorizontal: 12, fontSize: 14, backgroundColor: '#faf8f4', color: '#333', marginBottom: 12 },
+  btnBuscar: { height: 44, borderRadius: 8, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
+  btnBuscarTexto: { fontSize: 14, fontWeight: '600', color: COLORS.white },
+  historialSection: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, borderWidth: 0.5, borderColor: COLORS.border },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  emptyHist: { padding: 16, textAlign: 'center', color: COLORS.gray, fontSize: 11 },
+  histItem: { padding: 9, borderBottomWidth: 0.5, borderBottomColor: '#f0e8d8' },
+  histRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  histAvatar: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  avatar: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  avatarText: { fontSize: 12, fontWeight: '500' },
+  histNombre: { fontSize: 12, fontWeight: '600', color: COLORS.text },
+  badgeOk: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, backgroundColor: '#EAF3DE' },
+  badgeErr: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, backgroundColor: '#FCEBEB' },
+  badgeTexto: { fontSize: 11, fontWeight: '500', color: COLORS.success },
+  histDetalle: { fontSize: 11, color: COLORS.gray, marginTop: 2 },
+  pendientesSection: { backgroundColor: COLORS.white, borderRadius: 12, padding: 16, borderWidth: 0.5, borderColor: COLORS.border },
+  emptyState: { alignItems: 'center', padding: 24 },
+  emptyTitle: { marginTop: 12, fontSize: 16, fontWeight: '600', color: COLORS.text },
+  emptyText: { marginTop: 4, fontSize: 13, color: COLORS.gray, textAlign: 'center' },
+  pendienteRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: '#f0e8d8', gap: 12 },
+  pendienteInfo: { flex: 1 },
+  pendienteNombre: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  pendienteCedula: { fontSize: 12, color: COLORS.gray, marginTop: 2 },
+
+  // Modal
+  modalContainer: { flex: 1, justifyContent: 'center', paddingHorizontal: 16, backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalContent: { backgroundColor: COLORS.white, borderRadius: 20, padding: 20, gap: 16 },
+  vendedorPreview: { gap: 12 },
+  vendedorAvatarLarge: { width: 88, height: 88, borderRadius: 44, backgroundColor: COLORS.primary + '10', justifyContent: 'center', alignItems: 'center', alignSelf: 'center' },
+  avatarLarge: { width: 88, height: 88, borderRadius: 44, justifyContent: 'center', alignItems: 'center' },
+  avatarTextLarge: { fontSize: 24, fontWeight: '500' },
+  previewInfo: { alignItems: 'center', gap: 2 },
+  previewTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text },
+  previewEmail: { fontSize: 13, color: COLORS.gray },
+  previewPhone: { fontSize: 12, color: COLORS.gray },
+  previewDni: { fontSize: 12, color: COLORS.gray },
+  previewDireccion: { fontSize: 11, color: COLORS.gray, marginTop: 2 },
+  section: { gap: 8 },
+  radioGroup: { flexDirection: 'row', gap: 12 },
+  radioButton: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 10, paddingHorizontal: 16, borderWidth: 2, borderColor: '#e0d8c8', borderRadius: 12 },
+  radioButtonSelected: { borderColor: COLORS.primary, backgroundColor: COLORS.primary + '10' },
+  radioCircle: { width: 20, height: 20, borderRadius: 10, borderWidth: 2, borderColor: '#e0d8c8' },
+  radioCircleSelected: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  radioLabel: { fontSize: 14, fontWeight: '500', color: COLORS.text },
+  radioLabelSelected: { color: COLORS.primary, fontWeight: '600' },
+  modalInput: { width: '100%', height: 100, borderWidth: 1, borderColor: '#d1c9b8', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, backgroundColor: '#faf8f4', color: '#333' },
+  modalActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 16, gap: 12 },
+  btnCancelar: { flex: 1, paddingVertical: 12, borderRadius: 8, backgroundColor: COLORS.white, borderWidth: 1, borderColor: '#d1c9b8', alignItems: 'center' },
+  btnCancelarTexto: { fontSize: 14, fontWeight: '600', color: '#666' },
+  btnConfirmar: { flex: 1, paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  btnConfirmarPrimario: { backgroundColor: COLORS.primary },
+  btnConfirmarPeligro: { backgroundColor: COLORS.danger },
+  btnConfirmarTexto: { fontSize: 14, fontWeight: '600', color: COLORS.white },
+
+  // Cámara
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
+  loadingText: { fontSize: 14, color: COLORS.gray, textAlign: 'center', marginTop: 8 },
+  cameraContainer: { flex: 1, backgroundColor: '#000' },
+  camera: { flex: 1 },
+  cameraOverlay: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)' },
+  scanFrame: { width: 220, height: 220, borderWidth: 2, borderColor: COLORS.primary, borderRadius: 12, backgroundColor: 'transparent' },
+  cameraHint: { color: COLORS.white, fontSize: 14, marginTop: 20, fontWeight: '600', textShadowColor: 'rgba(0,0,0,0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
+  cameraCloseBtn: { position: 'absolute', bottom: 40, alignSelf: 'center', zIndex: 10 },
+});
+</file>
+
+<file path="pantallas/VehiculoDetalle.jsx">
+/**
+ * @fileoverview Pantalla de detalle de un vehículo.
+ * Muestra información completa: placa, modelo, color, propietario, vigencia y QR.
+ * @module pantallas/VehiculoDetalle
+ */
+
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppData } from '../gatillos/useAppData';
+import { colorHexDe } from '../utilidades/uiOptions';
+import { COLORS } from '../utilidades/config';
+
+/**
+ * Pantalla de detalle de vehículo.
+ * @param {Object} props
+ * @param {Object} props.route - Contiene `item` con los datos iniciales.
+ * @param {Object} props.navigation - Navegación.
+ * @returns {JSX.Element}
+ */
+export default function VehiculoDetalle({ route, navigation }) {
+  const { obtenerVehiculo } = useAppData();
+  const { item } = route.params || {};
+  const [vehiculo, setVehiculo] = useState(item);
+  const [cargando, setCargando] = useState(false);
+
+  /** Si el item no trae códigoQR, carga el detalle completo desde el servidor. */
+  useEffect(() => {
+    if (item && !item.codigoQr) {
+      cargarDetalle();
+    }
+  }, [item]);
+
+  /**
+   * Obtiene el detalle completo del vehículo.
+   * @async
+   */
+  const cargarDetalle = async () => {
+    if (!item) return;
+    setCargando(true);
+    try {
+      const detalle = await obtenerVehiculo(item.idVehiculo);
+      setVehiculo(detalle);
+    } catch (err) {
+      Alert.alert('Error', 'No se pudo cargar el detalle');
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  if (cargando) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  if (!vehiculo) {
+    return (
+      <View style={styles.empty}>
+        <Text style={styles.emptyText}>No se pudo cargar el vehículo</Text>
+      </View>
+    );
+  }
+
+  const esVigente = vehiculo.estadoActivo === 'VIGENTE';
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitulo}>Detalle del Vehículo</Text>
+        <View style={{ width: 44 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <View style={styles.vehicleIcon}>
+              <Ionicons name="car" size={32} color={colorHexDe(vehiculo.color)} />
+            </View>
+            <View style={styles.vehicleTitleContainer}>
+              <Text style={styles.vehicleTitle}>{vehiculo.marca} {vehiculo.modelo}</Text>
+              <Text style={styles.vehicleSubtitle}>{vehiculo.placa}</Text>
+            </View>
+            <View style={[styles.statusBadge, { backgroundColor: esVigente ? '#d1fae5' : '#fee2e2' }]}>
+              <Text style={[styles.statusText, { color: esVigente ? COLORS.success : COLORS.danger }]}>
+                {esVigente ? '✓ Vigente' : '✗ ' + vehiculo.estadoActivo}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.divider} />
+
+          <View style={styles.detailRow}>
+            <View style={styles.detailItem}>
+              <Ionicons name="id-badge" size={20} color={COLORS.gray} style={styles.detailIcon} />
+              <View>
+                <Text style={styles.detailLabel}>Placa</Text>
+                <Text style={styles.detailValue}>{vehiculo.placa}</Text>
+              </View>
+            </View>
+            <View style={styles.detailItem}>
+              <Ionicons name="brush" size={20} color={COLORS.gray} style={styles.detailIcon} />
+              <View>
+                <Text style={styles.detailLabel}>Color</Text>
+                <View style={styles.detailValueColor}>
+                  <View style={[styles.colorSwatch, { backgroundColor: colorHexDe(vehiculo.color) }]} />
+                  <Text>{vehiculo.color}</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.detailItem}>
+              <Ionicons name="car" size={20} color={COLORS.gray} style={styles.detailIcon} />
+              <View>
+                <Text style={styles.detailLabel}>Modelo</Text>
+                <Text style={styles.detailValue}>{vehiculo.modelo}</Text>
+              </View>
+            </View>
+            <View style={styles.detailItem}>
+              <Ionicons name="calendar" size={20} color={COLORS.gray} style={styles.detailIcon} />
+              <View>
+                <Text style={styles.detailLabel}>Vence</Text>
+                <Text style={styles.detailValue}>{vehiculo.fechaExpiracion}</Text>
+              </View>
+            </View>
+          </View>
+
+          <View style={styles.detailRow}>
+            <View style={styles.detailItem}>
+              <Ionicons name="person" size={20} color={COLORS.gray} style={styles.detailIcon} />
+              <View>
+                <Text style={styles.detailLabel}>Propietario</Text>
+                <Text style={styles.detailValue}>{vehiculo.nombrePropietario || '—'}</Text>
+              </View>
+            </View>
+            <View style={styles.detailItem}>
+              <Ionicons name="home" size={20} color={COLORS.gray} style={styles.detailIcon} />
+              <View>
+                <Text style={styles.detailLabel}>ID Habitante</Text>
+                <Text style={styles.detailValue}>{vehiculo.idHabitante || '—'}</Text>
+              </View>
+            </View>
+          </View>
+
+          {vehiculo.codigoQr ? (
+            <View style={styles.qrSection}>
+              <Text style={styles.sectionTitle}>Código QR</Text>
+              <View style={styles.qrContainer}>
+                <Text style={styles.qrCode}>{vehiculo.codigoQr}</Text>
+                <Text style={styles.qrHint}>Este valor debe codificarse en la imagen QR física a imprimir.</Text>
+              </View>
+            </View>
+          ) : null}
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  backBtn: { padding: 4 },
+  headerTitulo: { fontSize: 18, fontWeight: '700', color: COLORS.text, flex: 1, textAlign: 'center' },
+  scrollContent: { padding: 16, paddingBottom: 40 },
+  card: { backgroundColor: COLORS.white, borderRadius: 16, borderWidth: 0.5, borderColor: COLORS.border, overflow: 'hidden' },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
+  vehicleIcon: { width: 56, height: 56, borderRadius: 14, backgroundColor: '#fef3c7', justifyContent: 'center', alignItems: 'center' },
+  vehicleTitleContainer: { flex: 1 },
+  vehicleTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text },
+  vehicleSubtitle: { fontSize: 13, color: COLORS.gray, marginTop: 2, fontFamily: 'monospace' },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
+  statusText: { fontSize: 12, fontWeight: '600' },
+  divider: { height: 0.5, backgroundColor: COLORS.border, marginHorizontal: 16 },
+  detailRow: { flexDirection: 'row', paddingHorizontal: 16, paddingVertical: 12, gap: 12 },
+  detailItem: { flex: 1, flexDirection: 'row', gap: 8 },
+  detailIcon: { marginTop: 2 },
+  detailLabel: { fontSize: 11, color: COLORS.gray, marginBottom: 2 },
+  detailValue: { fontSize: 14, fontWeight: '500', color: COLORS.text },
+  detailValueColor: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  colorSwatch: { width: 14, height: 14, borderRadius: 3, borderWidth: 0.5, borderColor: COLORS.border },
+  qrSection: { paddingHorizontal: 16, paddingVertical: 16, borderTopWidth: 0.5, borderTopColor: COLORS.border },
+  sectionTitle: { fontSize: 13, fontWeight: '600', color: COLORS.text, marginBottom: 8 },
+  qrContainer: { alignItems: 'center', gap: 8 },
+  qrCode: { fontFamily: 'monospace', fontSize: 13, color: COLORS.text },
+  qrHint: { fontSize: 11, color: COLORS.gray, textAlign: 'center' },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  empty: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  emptyText: { color: COLORS.gray },
+});
+</file>
+
+<file path="pantallas/VehiculoFormulario.jsx">
+/**
+ * @fileoverview Formulario de creación y edición de vehículos.
+ * @module pantallas/VehiculoFormulario
+ */
+
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppData } from '../gatillos/useAppData';
+import { vehiculoColores } from '../utilidades/uiOptions';
+import { COLORS } from '../utilidades/config';
+
+/**
+ * Obtiene la fecha de hoy en formato YYYY-MM-DD.
+ * @returns {string}
+ */
+const getHoy = () => new Date().toISOString().split('T')[0];
+
+/**
+ * Obtiene la fecha de hoy + 1 año en formato YYYY-MM-DD.
+ * @returns {string}
+ */
+const getHoyMasUnAno = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().split('T')[0];
+};
+
+/**
+ * Pantalla de formulario para vehículos.
+ * @param {Object} props
+ * @param {Object} props.route - Contiene `item` en modo edición.
+ * @param {Object} props.navigation - Navegación.
+ * @returns {JSX.Element}
+ */
+export default function VehiculoFormulario({ route, navigation }) {
+  const { addVehiculo, updateVehiculo } = useAppData();
+  const { item } = route.params || {};
+  const editando = !!item;
+
+  const [placa, setPlaca] = useState(item?.placa || '');
+  const [modelo, setModelo] = useState(item?.modelo || '');
+  const [color, setColor] = useState(item?.color || vehiculoColores[0].nombre);
+  const [idHabitante, setIdHabitante] = useState(item?.idHabitante ?? '');
+  const [fechaEmision, setFechaEmision] = useState(item?.fechaEmision || getHoy());
+  const [fechaExpiracion, setFechaExpiracion] = useState(item?.fechaExpiracion || getHoyMasUnAno());
+  const [error, setError] = useState('');
+  const [guardando, setGuardando] = useState(false);
+
+  /**
+   * Valida y envía el formulario.
+   * @async
+   */
+  const handleSubmit = async () => {
+    if (!placa.trim() || !modelo.trim() || !idHabitante || !fechaEmision || !fechaExpiracion) {
+      setError('Completa placa, modelo, habitante y ambas fechas.');
+      return;
+    }
+    if (new Date(fechaEmision) > new Date(getHoy())) {
+      setError('La fecha de emisión no puede ser posterior a hoy.');
+      return;
+    }
+    if (new Date(fechaExpiracion) < new Date(fechaEmision)) {
+      setError('La fecha de expiración no puede ser anterior a la de emisión.');
+      return;
+    }
+    setGuardando(true);
+    setError('');
+    try {
+      const payload = {
+        placa: placa.trim().toUpperCase(),
+        modelo: modelo.trim(),
+        color,
+        idHabitante: Number(idHabitante),
+        fechaEmision,
+        fechaExpiracion,
+        estadoActivo: editando ? (item.estadoActivo || 'VIGENTE') : 'VIGENTE',
+      };
+      if (editando) {
+        await updateVehiculo(item.idVehiculo, payload);
+      } else {
+        await addVehiculo(payload);
+      }
+      navigation.goBack();
+    } catch (err) {
+      setError('Error al guardar el vehículo');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitulo}>{editando ? 'Editar Vehículo' : 'Nuevo Vehículo'}</Text>
+        <View style={{ width: 44 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.form}>
+          <View style={styles.campo}>
+            <Text style={styles.label}>Placa *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. ABC-1234"
+              value={placa}
+              onChangeText={setPlaca}
+              autoCapitalize="characters"
+            />
+          </View>
+
+          <View style={styles.campo}>
+            <Text style={styles.label}>Modelo *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. Toyota Hilux"
+              value={modelo}
+              onChangeText={setModelo}
+            />
+          </View>
+
+          <View style={styles.campo}>
+            <Text style={styles.label}>ID Habitante (legacy) *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. 4050"
+              value={String(idHabitante)}
+              onChangeText={setIdHabitante}
+              keyboardType="numeric"
+            />
+          </View>
+
+          <View style={styles.campo}>
+            <Text style={styles.label}>Color</Text>
+            <View style={styles.colorSelector}>
+              {vehiculoColores.map(c => (
+                <TouchableOpacity
+                  key={c.nombre}
+                  style={[
+                    styles.colorOption,
+                    color === c.nombre && styles.colorOptionActivo,
+                    { backgroundColor: c.hex }
+                  ]}
+                  onPress={() => setColor(c.nombre)}
+                >
+                  {color === c.nombre && (
+                    <Ionicons name="check" size={20} color={COLORS.white} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.filaFechas}>
+            <View style={styles.campo}>
+              <Text style={styles.label}>Fecha Emisión *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                value={fechaEmision}
+                onChangeText={(text) => {
+                  setFechaEmision(text);
+                  const d = new Date(text);
+                  if (!isNaN(d.getTime())) {
+                    d.setFullYear(d.getFullYear() + 1);
+                    setFechaExpiracion(d.toISOString().split('T')[0]);
+                  }
+                }}
+              />
+            </View>
+            <View style={styles.campo}>
+              <Text style={styles.label}>Fecha Expiración *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                value={fechaExpiracion}
+                onChangeText={setFechaExpiracion}
+              />
+            </View>
+          </View>
+
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <View style={styles.btnContainer}>
+            <TouchableOpacity style={styles.btnSecundario} onPress={() => navigation.goBack()}>
+              <Text style={styles.btnSecundarioTexto}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.btnPrimario, guardando && styles.btnDisabled]} onPress={handleSubmit} disabled={guardando}>
+              <Text style={styles.btnPrimarioTexto}>{guardando ? 'Guardando…' : (editando ? 'Actualizar' : 'Crear')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  backBtn: { padding: 4 },
+  headerTitulo: { fontSize: 18, fontWeight: '700', color: COLORS.text, flex: 1, textAlign: 'center' },
+  scrollContent: { padding: 16, paddingBottom: 40 },
+  form: { gap: 16 },
+  campo: { gap: 6 },
+  label: { fontSize: 12, fontWeight: '500', color: '#666' },
+  input: { height: 48, borderWidth: 1, borderColor: '#d1c9b8', borderRadius: 8, paddingHorizontal: 14, fontSize: 15, backgroundColor: '#faf8f4', color: '#333' },
+  colorSelector: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  colorOption: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: 'transparent', justifyContent: 'center', alignItems: 'center' },
+  colorOptionActivo: { borderColor: COLORS.white, borderWidth: 3 },
+  filaFechas: { flexDirection: 'row', gap: 12 },
+  error: { fontSize: 12, color: COLORS.danger, textAlign: 'center' },
+  btnContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24, gap: 12 },
+  btnPrimario: { flex: 1, height: 48, borderRadius: 8, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  btnPrimarioTexto: { fontSize: 15, fontWeight: '600', color: COLORS.white },
+  btnSecundario: { flex: 1, height: 48, borderRadius: 8, backgroundColor: COLORS.white, borderWidth: 1, borderColor: '#d1c9b8', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  btnSecundarioTexto: { fontSize: 15, fontWeight: '600', color: '#666' },
+  btnDisabled: { opacity: 0.6 },
+});
+</file>
+
+<file path="pantallas/VehiculosLista.jsx">
+/**
+ * @fileoverview Listado paginado de vehículos con filtros por texto y estado.
+ * Permite navegar al formulario de creación/edición y revocar/activar vehículos.
+ * @module pantallas/VehiculosLista
+ */
+
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppData } from '../gatillos/useAppData';
+import { colorHexDe } from '../utilidades/uiOptions';
+import { COLORS } from '../utilidades/config';
+
+/**
+ * Pantalla de gestión de vehículos.
+ * @param {Object} props
+ * @param {Object} props.navigation - Navegación.
+ * @returns {JSX.Element}
+ */
+export default function VehiculosLista({ navigation }) {
+  const { 
+    vehiculos, 
+    vehiculosMeta, 
+    vehiculosPage, 
+    vehiculosLoading, 
+    vehiculosError, 
+    fetchVehiculos, 
+    toggleVehiculoEstado 
+  } = useAppData();
+
+  const [filtroTexto, setFiltroTexto] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('todos');
+
+  /**
+   * Filtra los vehículos de la página actual según texto y estado.
+   * @type {Array<Object>}
+   */
+  const visibles = vehiculos.filter(v => {
+    const t = filtroTexto.trim().toLowerCase();
+    const matchesTexto = !t || v.placa.toLowerCase().includes(t) || (v.nombrePropietario || '').toLowerCase().includes(t);
+    const matchesEstado = filtroEstado === 'todos' || v.estadoActivo === filtroEstado;
+    return matchesTexto && matchesEstado;
+  });
+
+  const vigentesEnPagina = vehiculos.filter(v => v.estadoActivo === 'VIGENTE').length;
+  const revocadosEnPagina = vehiculos.filter(v => v.estadoActivo !== 'VIGENTE').length;
+
+  /** Carga inicial de la primera página. */
+  useEffect(() => {
+    fetchVehiculos(1);
+  }, [fetchVehiculos]);
+
+  /**
+   * Cambia de página en el listado.
+   * @param {number} page - Número de página destino.
+   */
+  const handlePageChange = (page) => {
+    fetchVehiculos(page);
+  };
+
+  /**
+   * Alterna el estado vigente/revocado de un vehículo.
+   * @param {Object} v - Vehículo a modificar.
+   */
+  const handleToggleEstado = (v) => {
+    try {
+      toggleVehiculoEstado(v);
+    } catch (err) {
+      Alert.alert('Error', 'No se pudo actualizar el estado');
+    }
+  };
+
+  if (vehiculosLoading && vehiculosPage === 1) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Cargando vehículos...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.titulo}>Gestión de Vehículos</Text>
+        <TouchableOpacity style={styles.btnNuevo} onPress={() => navigation.navigate('VehiculoFormulario')}>
+          <Ionicons name="add" size={20} color={COLORS.white} style={{ marginRight: 6 }} />
+          <Text style={styles.btnNuevoTexto}>Nuevo</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.statsRow}>
+        <View style={styles.stat}>
+          <Text style={styles.statNumero}>{vehiculosMeta?.totalItems || '—'}</Text>
+          <Text style={styles.statLabel}>Total registrados</Text>
+        </View>
+        <View style={styles.stat}>
+          <Text style={[styles.statNumero, { color: COLORS.success }]}>{vigentesEnPagina}</Text>
+          <Text style={styles.statLabel}>Vigentes (esta página)</Text>
+        </View>
+        <View style={styles.stat}>
+          <Text style={[styles.statNumero, { color: COLORS.danger }]}>{revocadosEnPagina}</Text>
+          <Text style={styles.statLabel}>Revocados (esta página)</Text>
+        </View>
+      </View>
+
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Filtrar en esta página…"
+          value={filtroTexto}
+          onChangeText={setFiltroTexto}
+        />
+        <View style={styles.chips}>
+          <TouchableOpacity style={[styles.chip, filtroEstado === 'todos' && styles.chipActivo]} onPress={() => setFiltroEstado('todos')}>
+            <Text style={[styles.chipTexto, filtroEstado === 'todos' && styles.chipTextoActivo]}>Todos</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.chip, filtroEstado === 'VIGENTE' && styles.chipActivo]} onPress={() => setFiltroEstado('VIGENTE')}>
+            <View style={[styles.dot, { backgroundColor: COLORS.success }]} />
+            <Text style={[styles.chipTexto, filtroEstado === 'VIGENTE' && styles.chipTextoActivo]}>Vigentes</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.chip, filtroEstado === 'REVOCADA' && styles.chipActivo]} onPress={() => setFiltroEstado('REVOCADA')}>
+            <View style={[styles.dot, { backgroundColor: COLORS.danger }]} />
+            <Text style={[styles.chipTexto, filtroEstado === 'REVOCADA' && styles.chipTextoActivo]}>Revocados</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Text style={styles.searchHint}>Este filtro solo busca dentro de la página cargada. Para buscar una placa específica en todo el padrón, usa el validador.</Text>
+
+      <FlatList
+        data={visibles}
+        keyExtractor={item => item.idVehiculo.toString()}
+        renderItem={({ item }) => (
+          <TouchableOpacity style={styles.row} onPress={() => navigation.navigate('VehiculoFormulario', { item })}>
+            <View style={styles.cellPlaca}>
+              <Text style={styles.cellMono}>{item.placa}</Text>
+            </View>
+            <View style={styles.cellInfo}>
+              <Text style={styles.cellModelo}>{item.modelo}</Text>
+              <View style={styles.cellColorRow}>
+                <View style={[styles.colorSwatch, { backgroundColor: colorHexDe(item.color) }]} />
+                <Text style={styles.cellColorTexto}>{item.color}</Text>
+              </View>
+            </View>
+            <View style={styles.cellPropietario}>
+              <Text style={styles.cellPropietarioTexto}>{item.nombrePropietario || '—'}</Text>
+            </View>
+            <View style={styles.cellVence}>
+              <Text style={styles.cellVenceTexto}>{item.fechaExpiracion}</Text>
+            </View>
+            <View style={styles.cellEstado}>
+              {item.estadoActivo === 'VIGENTE' ? (
+                <View style={styles.badgeVigente}>
+                  <Ionicons name="check" size={10} color={COLORS.success} />
+                  <Text style={styles.badgeTexto}>Vigente</Text>
+                </View>
+              ) : (
+                <View style={styles.badgeRevocada}>
+                  <Ionicons name="ban" size={10} color={COLORS.danger} />
+                  <Text style={[styles.badgeTexto, { color: COLORS.danger }]}>{item.estadoActivo}</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.cellAcciones}>
+              <TouchableOpacity onPress={e => { e.stopPropagation(); handleToggleEstado(item); }} style={styles.actionBtn}>
+                <Ionicons name={item.estadoActivo === 'VIGENTE' ? 'ban' : 'rotate-clockwise'} size={18} color={COLORS.danger} />
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        )}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name={visibles.length === 0 ? 'car-off' : 'search-off'} size={64} color={COLORS.gray} />
+            <Text style={styles.emptyText}>No hay vehículos que coincidan</Text>
+          </View>
+        }
+      />
+
+      {vehiculosMeta && vehiculosMeta.totalPages > 1 && (
+        <View style={styles.pager}>
+          <Text style={styles.pagerText}>
+            {vehiculosMeta ? `Página ${vehiculosMeta.currentPage} de ${vehiculosMeta.totalPages} · Total ${vehiculosMeta.totalItems}` : '—'}
+          </Text>
+          <View style={styles.pagerButtons}>
+            <TouchableOpacity
+              style={[styles.pagerBtn, !vehiculosMeta?.prevPage && styles.pagerBtnDisabled]}
+              onPress={() => handlePageChange(vehiculosPage - 1)}
+              disabled={!vehiculosMeta?.prevPage}
+            >
+              <Text style={styles.pagerBtnText}>← Anterior</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.pagerBtn, styles.pagerBtnActive]}>
+              <Text style={[styles.pagerBtnText, { color: COLORS.white }]}>{vehiculosPage}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.pagerBtn, !vehiculosMeta?.nextPage && styles.pagerBtnDisabled]}
+              onPress={() => handlePageChange(vehiculosPage + 1)}
+              disabled={!vehiculosMeta?.nextPage}
+            >
+              <Text style={styles.pagerBtnText}>Siguiente →</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  titulo: { fontSize: 20, fontWeight: '700', color: COLORS.text },
+  btnNuevo: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: COLORS.primary },
+  btnNuevoTexto: { fontSize: 13, fontWeight: '600', color: COLORS.white },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, color: COLORS.gray },
+  statsRow: { flexDirection: 'row', padding: 16, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
+  stat: { flex: 1, paddingHorizontal: 8 },
+  statNumero: { fontSize: 18, fontWeight: '700', color: COLORS.text, margin: 0 },
+  statLabel: { fontSize: 10, color: COLORS.gray, marginTop: 1 },
+  searchRow: { padding: 16, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
+  searchInput: { height: 40, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 14, backgroundColor: COLORS.background, color: COLORS.text, marginBottom: 12 },
+  chips: { flexDirection: 'row', gap: 6 },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 1, borderColor: COLORS.border, borderRadius: 20, backgroundColor: COLORS.background },
+  chipActivo: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  chipTexto: { fontSize: 12, color: COLORS.gray },
+  chipTextoActivo: { color: COLORS.white },
+  dot: { width: 7, height: 7, borderRadius: 50 },
+  searchHint: { fontSize: 11, color: COLORS.gray, paddingHorizontal: 16, paddingBottom: 8 },
+  row: { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: COLORS.border, alignItems: 'center' },
+  cellPlaca: { width: '14%' },
+  cellMono: { fontFamily: 'monospace', fontWeight: '600', fontSize: 12 },
+  cellInfo: { width: '20%' },
+  cellModelo: { fontSize: 12, color: COLORS.text },
+  cellColorRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 },
+  colorSwatch: { width: 12, height: 12, borderRadius: 3, borderWidth: 0.5, borderColor: COLORS.border },
+  cellColorTexto: { fontSize: 12, color: COLORS.text },
+  cellPropietario: { width: '20%' },
+  cellPropietarioTexto: { fontSize: 12, color: COLORS.text },
+  cellVence: { width: '13%', alignItems: 'center' },
+  cellVenceTexto: { fontSize: 11, color: COLORS.text },
+  cellEstado: { width: '10%', alignItems: 'center' },
+  badgeVigente: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20, backgroundColor: '#d1fae5' },
+  badgeRevocada: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 20, backgroundColor: COLORS.background },
+  badgeTexto: { fontSize: 10, fontWeight: '500', color: COLORS.success },
+  cellAcciones: { width: '13%', alignItems: 'center' },
+  actionBtn: { padding: 4 },
+  listContent: { paddingBottom: 20 },
+  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  emptyText: { marginTop: 12, fontSize: 14, color: COLORS.gray },
+  pager: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, backgroundColor: COLORS.background, borderTopWidth: 0.5, borderTopColor: COLORS.border },
+  pagerText: { fontSize: 11, color: COLORS.gray },
+  pagerButtons: { flexDirection: 'row', gap: 4 },
+  pagerBtn: { height: 28, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, justifyContent: 'center' },
+  pagerBtnActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  pagerBtnDisabled: { opacity: 0.4 },
+  pagerBtnText: { fontSize: 11, color: COLORS.gray },
+});
+</file>
+
+<file path="pantallas/VendedoresLista.jsx">
+/**
+ * @fileoverview Listado paginado de vendedores con filtros y acciones de revocación/reactivación.
+ * @module pantallas/VendedoresLista
+ */
+
+import React, { useEffect, useState, useMemo } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, TextInput, Alert } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppData } from '../gatillos/useAppData';
+import { getInitials, getAvatarColors } from '../utilidades/uiOptions';
+import { COLORS } from '../utilidades/config';
+import Modal from '../componentes/Modal';
+
+/**
+ * Obtiene la fecha de hoy en formato YYYY-MM-DD.
+ * @returns {string}
+ */
+const getHoy = () => new Date().toISOString().split('T')[0];
+
+/**
+ * Obtiene la fecha de hoy + 1 año en formato YYYY-MM-DD.
+ * @returns {string}
+ */
+const getHoyMasUnAno = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().split('T')[0];
+};
+
+/**
+ * Pantalla de gestión de vendedores.
+ * @param {Object} props
+ * @param {Object} props.navigation - Navegación.
+ * @returns {JSX.Element}
+ */
+export default function VendedoresLista({ navigation }) {
+  const { 
+    vendedores, 
+    vendedoresMeta, 
+    vendedoresPage, 
+    vendedoresLoading, 
+    fetchVendedores, 
+    obtenerVendedor, 
+    revocarVendedor,
+    updateVendedor
+  } = useAppData();
+
+  const [filtroTexto, setFiltroTexto] = useState('');
+  const [filtroEstado, setFiltroEstado] = useState('todos');
+  const [cargandoDetalle, setCargandoDetalle] = useState(false);
+
+  // Modal de reactivación
+  const [showReactivarModal, setShowReactivarModal] = useState(false);
+  const [vendedorAReactivar, setVendedorAReactivar] = useState(null);
+  const [nuevaFechaEmision, setNuevaFechaEmision] = useState(getHoy());
+  const [nuevaFechaExpiracion, setNuevaFechaExpiracion] = useState(getHoyMasUnAno());
+
+  /** Vendedores filtrados por texto y estado. */
+  const visibles = useMemo(() => {
+    return vendedores.filter((v) => {
+      const t = filtroTexto.trim().toLowerCase();
+      const matchesTexto = !t || v.cedula.toLowerCase().includes(t) || v.nombre.toLowerCase().includes(t);
+      const matchesEstado = filtroEstado === 'todos' || v.estadoActivo === filtroEstado;
+      return matchesTexto && matchesEstado;
+    });
+  }, [vendedores, filtroTexto, filtroEstado]);
+
+  const vigentesEnPagina = vendedores.filter((v) => v.estadoActivo === 'VIGENTE').length;
+  const otrosEnPagina = vendedores.filter((v) => v.estadoActivo !== 'VIGENTE').length;
+
+  /** Carga inicial. */
+  useEffect(() => {
+    fetchVendedores(1);
+  }, [fetchVendedores]);
+
+  /**
+   * Navega al formulario de edición con el detalle completo.
+   * @async
+   * @param {Object} v - Vendedor seleccionado.
+   */
+  const handleEditar = async (v) => {
+    setCargandoDetalle(true);
+    try {
+      const detalle = await obtenerVendedor(v.idVendedor);
+      navigation.navigate('VendedorFormulario', { item: detalle });
+    } catch (err) {
+      Alert.alert('Error', 'No se pudo cargar el detalle del vendedor');
+    } finally {
+      setCargandoDetalle(false);
+    }
+  };
+
+  /**
+   * Revoca la autorización de un vendedor.
+   * @async
+   * @param {Object} v - Vendedor a revocar.
+   */
+  const handleRevocar = async (v) => {
+    setCargandoDetalle(true);
+    try {
+      const detalle = await obtenerVendedor(v.idVendedor);
+      await revocarVendedor(detalle);
+    } catch (err) {
+      Alert.alert('Error', 'No se pudo revocar la autorización');
+    } finally {
+      setCargandoDetalle(false);
+    }
+  };
+
+  /**
+   * Abre el modal para reactivar un vendedor revocado.
+   * @param {Object} v - Vendedor a reactivar.
+   */
+  const handleAbrirReactivar = (v) => {
+    setVendedorAReactivar(v);
+    setNuevaFechaEmision(getHoy());
+    setNuevaFechaExpiracion(getHoyMasUnAno());
+    setShowReactivarModal(true);
+  };
+
+  /**
+   * Confirma la reactivación del vendedor con nuevas fechas.
+   * @async
+   */
+  const handleConfirmarReactivacion = async () => {
+    if (!vendedorAReactivar) return;
+    if (new Date(nuevaFechaExpiracion) < new Date(nuevaFechaEmision)) {
+      Alert.alert('Error', 'La fecha de expiración no puede ser anterior a la de emisión.');
+      return;
+    }
+    try {
+      setCargandoDetalle(true);
+      await updateVendedor(vendedorAReactivar.idVendedor, {
+        cedula: vendedorAReactivar.cedula,
+        nombre: vendedorAReactivar.nombre,
+        foto: vendedorAReactivar.foto,
+        nResolucion: vendedorAReactivar.nResolucion,
+        fechaEmision: nuevaFechaEmision,
+        fechaExpiracion: nuevaFechaExpiracion,
+        estadoActivo: 'VIGENTE',
+        idHabitante: vendedorAReactivar.idHabitante,
+        categoriasIds: (vendedorAReactivar.categorias || []).map((c) => c.idCategoria),
+      });
+      setShowReactivarModal(false);
+      setVendedorAReactivar(null);
+    } catch (err) {
+      Alert.alert('Error', 'No se pudo reactivar el vendedor');
+    } finally {
+      setCargandoDetalle(false);
+    }
+  };
+
+  if (vendedoresLoading && vendedoresPage === 1) {
+    return (
+      <View style={styles.loading}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={styles.loadingText}>Cargando vendedores...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.titulo}>Gestión de Vendedores</Text>
+        <TouchableOpacity style={styles.btnNuevo} onPress={() => navigation.navigate('VendedorFormulario')}>
+          <Ionicons name="add" size={20} color={COLORS.white} style={{ marginRight: 6 }} />
+          <Text style={styles.btnNuevoTexto}>Nuevo</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Filtrar por cédula o nombre en esta página…"
+          value={filtroTexto}
+          onChangeText={setFiltroTexto}
+        />
+      </View>
+
+      <View style={styles.statsRow}>
+        <View style={styles.stat}>
+          <Text style={styles.statNumero}>{vendedoresMeta?.totalItems || '—'}</Text>
+          <Text style={styles.statLabel}>Total registrados</Text>
+        </View>
+        <View style={styles.stat}>
+          <Text style={[styles.statNumero, { color: COLORS.success }]}>{vigentesEnPagina}</Text>
+          <Text style={styles.statLabel}>Vigentes (esta página)</Text>
+        </View>
+        <View style={styles.stat}>
+          <Text style={[styles.statNumero, { color: COLORS.danger }]}>{otrosEnPagina}</Text>
+          <Text style={styles.statLabel}>No vigentes (esta página)</Text>
+        </View>
+      </View>
+
+      <View style={styles.filters}>
+        <Text style={styles.filterLabel}>Filtrar:</Text>
+        <TouchableOpacity style={[styles.chip, filtroEstado === 'todos' && styles.chipActivo]} onPress={() => setFiltroEstado('todos')}>
+          <Text style={[styles.chipTexto, filtroEstado === 'todos' && styles.chipTextoActivo]}>Todos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.chip, filtroEstado === 'VIGENTE' && styles.chipActivo]} onPress={() => setFiltroEstado('VIGENTE')}>
+          <View style={[styles.dot, { backgroundColor: COLORS.success }]} />
+          <Text style={[styles.chipTexto, filtroEstado === 'VIGENTE' && styles.chipTextoActivo]}>Vigentes</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.chip, filtroEstado === 'REVOCADA' && styles.chipActivo]} onPress={() => setFiltroEstado('REVOCADA')}>
+          <View style={[styles.dot, { backgroundColor: COLORS.danger }]} />
+          <Text style={[styles.chipTexto, filtroEstado === 'REVOCADA' && styles.chipTextoActivo]}>Revocados</Text>
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.searchHint}>Este filtro solo busca dentro de la página cargada. Para verificar una cédula/resolución/QR específico en todo el sistema, usa el validador.</Text>
+
+      <FlatList
+        data={visibles}
+        keyExtractor={(item) => item.idVendedor.toString()}
+        renderItem={({ item }) => (
+          <View style={styles.card}>
+            <View style={styles.cardTop}>
+              <View style={[styles.avatar, { backgroundColor: getAvatarColors(item.nombre).bg }]}>
+                <Text style={[styles.avatarText, { color: getAvatarColors(item.nombre).color }]}>{getInitials(item.nombre)}</Text>
+              </View>
+              <View style={styles.cardTopInfo}>
+                <Text style={styles.nombre}>{item.nombre}</Text>
+                <View style={styles.categoriasRow}>
+                  {(item.categorias || []).map((c) => (
+                    <View key={c.idCategoria} style={styles.badgeCategoria}>
+                      <Text style={styles.badgeCategoriaTexto}>{c.nombre}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={styles.resolucion}>Resol. {item.nResolucion}</Text>
+              </View>
+              <View style={styles.cardTopEstado}>
+                {item.estadoActivo === 'VIGENTE' ? (
+                  <View style={styles.badgeVigente}>
+                    <Ionicons name="check" size={10} color={COLORS.success} />
+                    <Text style={styles.badgeTexto}>Vigente</Text>
+                  </View>
+                ) : (
+                  <View style={styles.badgeRevoca}>
+                    <Ionicons name="alert-circle" size={10} color={COLORS.danger} />
+                    <Text style={[styles.badgeTexto, { color: COLORS.danger }]}>{item.estadoActivo}</Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.cardBottom}>
+              <View style={styles.metaRow}>
+                <Ionicons name="card" size={12} color={COLORS.gray} />
+                <Text style={styles.metaText}>Cédula: {item.cedula}</Text>
+              </View>
+              <View style={styles.metaRow}>
+                <Ionicons name="calendar" size={12} color={COLORS.gray} />
+                <Text style={styles.metaText}>Vence: {item.fechaExpiracion || '—'}</Text>
+              </View>
+              <View style={styles.actionsRow}>
+                <TouchableOpacity onPress={() => handleEditar(item)} style={styles.actionBtn}>
+                  <Ionicons name="create" size={18} color={COLORS.primary} />
+                  <Text style={styles.actionText}>Editar</Text>
+                </TouchableOpacity>
+                {item.estadoActivo === 'VIGENTE' ? (
+                  <TouchableOpacity onPress={() => handleRevocar(item)} style={styles.actionBtn}>
+                    <Ionicons name="ban" size={18} color={COLORS.danger} />
+                    <Text style={[styles.actionText, { color: COLORS.danger }]}>Revocar</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <TouchableOpacity onPress={() => handleAbrirReactivar(item)} style={styles.actionBtn}>
+                    <Ionicons name="refresh" size={18} color={COLORS.success} />
+                    <Text style={[styles.actionText, { color: COLORS.success }]}>Reactivar</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </View>
+          </View>
+        )}
+        contentContainerStyle={styles.listContent}
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Ionicons name="people-off" size={64} color={COLORS.gray} />
+            <Text style={styles.emptyText}>No hay vendedores que coincidan</Text>
+          </View>
+        }
+      />
+
+      {vendedoresMeta && vendedoresMeta.totalPages > 1 && (
+        <View style={styles.pager}>
+          <Text style={styles.pagerText}>
+            {vendedoresMeta ? `Página ${vendedoresMeta.currentPage} de ${vendedoresMeta.totalPages} · Total ${vendedoresMeta.totalItems}` : '—'}
+          </Text>
+          <View style={styles.pagerButtons}>
+            <TouchableOpacity style={[styles.pagerBtn, !vendedoresMeta?.prevPage && styles.pagerBtnDisabled]} onPress={() => fetchVendedores(vendedoresPage - 1)} disabled={!vendedoresMeta?.prevPage}>
+              <Text style={styles.pagerBtnText}>← Anterior</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.pagerBtn, styles.pagerBtnActive]}>
+              <Text style={[styles.pagerBtnText, { color: COLORS.white }]}>{vendedoresPage}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.pagerBtn, !vendedoresMeta?.nextPage && styles.pagerBtnDisabled]} onPress={() => fetchVendedores(vendedoresPage + 1)} disabled={!vendedoresMeta?.nextPage}>
+              <Text style={styles.pagerBtnText}>Siguiente →</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
+
+      {cargandoDetalle ? (
+        <View style={styles.loadingOverlay}>
+          <Text style={styles.loadingOverlayText}>Cargando detalle…</Text>
+        </View>
+      ) : null}
+
+      {/* Modal de Reactivación */}
+      <Modal visible={showReactivarModal} transparent={true} onRequestClose={() => setShowReactivarModal(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalBox}>
+            <Text style={styles.modalTitle}>Reactivar Vendedor</Text>
+            <Text style={styles.modalSubtitle}>Define las nuevas fechas de la licencia</Text>
+
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>Fecha de emisión *</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={nuevaFechaEmision}
+                onChangeText={(text) => {
+                  setNuevaFechaEmision(text);
+                  // Auto-ajustar vencimiento a +1 año si aún no ha sido tocado manualmente o siempre
+                  const d = new Date(text);
+                  if (!isNaN(d.getTime())) {
+                    d.setFullYear(d.getFullYear() + 1);
+                    setNuevaFechaExpiracion(d.toISOString().split('T')[0]);
+                  }
+                }}
+                placeholder="YYYY-MM-DD"
+              />
+            </View>
+
+            <View style={styles.modalField}>
+              <Text style={styles.modalLabel}>Fecha de expiración *</Text>
+              <TextInput
+                style={styles.modalInput}
+                value={nuevaFechaExpiracion}
+                onChangeText={setNuevaFechaExpiracion}
+                placeholder="YYYY-MM-DD"
+              />
+            </View>
+
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.btnModalSecundario} onPress={() => setShowReactivarModal(false)}>
+                <Text style={styles.btnModalSecundarioTexto}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.btnModalPrimario} onPress={handleConfirmarReactivacion}>
+                <Text style={styles.btnModalPrimarioTexto}>Reactivar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  titulo: { fontSize: 20, fontWeight: '700', color: COLORS.text },
+  btnNuevo: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, backgroundColor: COLORS.primary },
+  btnNuevoTexto: { fontSize: 13, fontWeight: '600', color: COLORS.white },
+  loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 12, color: COLORS.gray },
+  searchRow: { padding: 16, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
+  searchInput: { height: 40, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, paddingHorizontal: 12, fontSize: 14, backgroundColor: COLORS.background, color: COLORS.text },
+  statsRow: { flexDirection: 'row', padding: 16, borderBottomWidth: 0.5, borderBottomColor: COLORS.border },
+  stat: { flex: 1, paddingHorizontal: 8 },
+  statNumero: { fontSize: 18, fontWeight: '700', color: COLORS.text, margin: 0 },
+  statLabel: { fontSize: 10, color: COLORS.gray, marginTop: 1 },
+  filters: { flexDirection: 'row', gap: 6, padding: 16, borderBottomWidth: 0.5, borderBottomColor: COLORS.border, flexWrap: 'wrap', alignItems: 'center' },
+  filterLabel: { fontSize: 11, color: COLORS.gray },
+  chip: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderWidth: 0.5, borderColor: COLORS.border, borderRadius: 20, backgroundColor: COLORS.background },
+  chipActivo: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  chipTexto: { fontSize: 11, color: '#666' },
+  chipTextoActivo: { color: COLORS.white },
+  dot: { width: 7, height: 7, borderRadius: 50 },
+  searchHint: { fontSize: 11, color: COLORS.gray, paddingHorizontal: 16, paddingBottom: 8 },
+  listContent: { paddingBottom: 20 },
+  card: { backgroundColor: COLORS.white, marginHorizontal: 16, marginTop: 12, borderRadius: 12, padding: 14, borderWidth: 0.5, borderColor: COLORS.border },
+  cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  avatar: { width: 44, height: 44, borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
+  avatarText: { fontSize: 14, fontWeight: '600' },
+  cardTopInfo: { flex: 1 },
+  nombre: { fontSize: 15, fontWeight: '700', color: COLORS.text },
+  categoriasRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 },
+  badgeCategoria: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, backgroundColor: COLORS.background },
+  badgeCategoriaTexto: { fontSize: 11, color: COLORS.text },
+  resolucion: { fontSize: 12, color: COLORS.gray, marginTop: 4, fontFamily: 'monospace' },
+  cardTopEstado: { alignItems: 'flex-end' },
+  badgeVigente: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, backgroundColor: '#d1fae5' },
+  badgeRevoca: { flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 20, backgroundColor: '#fee2e2' },
+  badgeTexto: { fontSize: 10, fontWeight: '500', color: COLORS.success },
+  cardBottom: { marginTop: 10, paddingTop: 10, borderTopWidth: 0.5, borderTopColor: COLORS.border, gap: 6 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  metaText: { fontSize: 12, color: COLORS.gray },
+  actionsRow: { flexDirection: 'row', gap: 16, marginTop: 4 },
+  actionBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 4 },
+  actionText: { fontSize: 12, fontWeight: '600', color: COLORS.primary },
+  emptyState: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
+  emptyText: { marginTop: 12, fontSize: 14, color: COLORS.gray },
+  pager: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 12, backgroundColor: COLORS.background, borderTopWidth: 0.5, borderTopColor: COLORS.border },
+  pagerText: { fontSize: 11, color: COLORS.gray },
+  pagerButtons: { flexDirection: 'row', gap: 4 },
+  pagerBtn: { height: 28, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.white, justifyContent: 'center' },
+  pagerBtnActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  pagerBtnDisabled: { opacity: 0.4 },
+  pagerBtnText: { fontSize: 11, color: COLORS.gray },
+  loadingOverlay: { position: 'absolute', bottom: 20, right: 20, backgroundColor: COLORS.text, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  loadingOverlayText: { color: COLORS.white, fontSize: 12 },
+
+  // Modal styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 24 },
+  modalBox: { backgroundColor: COLORS.white, borderRadius: 16, padding: 20, gap: 14 },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text },
+  modalSubtitle: { fontSize: 13, color: COLORS.gray, marginBottom: 4 },
+  modalField: { gap: 6 },
+  modalLabel: { fontSize: 12, fontWeight: '500', color: '#666' },
+  modalInput: { height: 44, borderWidth: 1, borderColor: '#d1c9b8', borderRadius: 8, paddingHorizontal: 12, fontSize: 14, backgroundColor: '#faf8f4', color: '#333' },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 8 },
+  btnModalSecundario: { flex: 1, height: 44, borderRadius: 8, backgroundColor: COLORS.white, borderWidth: 1, borderColor: '#d1c9b8', justifyContent: 'center', alignItems: 'center' },
+  btnModalSecundarioTexto: { fontSize: 14, fontWeight: '600', color: '#666' },
+  btnModalPrimario: { flex: 1, height: 44, borderRadius: 8, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' },
+  btnModalPrimarioTexto: { fontSize: 14, fontWeight: '600', color: COLORS.white },
+});
+</file>
+
+<file path="pantallas/VendedorFormulario.jsx">
+/**
+ * @fileoverview Formulario de creación y edición de vendedores.
+ * @module pantallas/VendedorFormulario
+ */
+
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useAppData } from '../gatillos/useAppData';
+import { COLORS } from '../utilidades/config';
+
+/**
+ * Obtiene la fecha de hoy en formato YYYY-MM-DD.
+ * @returns {string}
+ */
+const getHoy = () => new Date().toISOString().split('T')[0];
+
+/**
+ * Obtiene la fecha de hoy + 1 año en formato YYYY-MM-DD.
+ * @returns {string}
+ */
+const getHoyMasUnAno = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().split('T')[0];
+};
+
+/**
+ * Pantalla de formulario para vendedores.
+ * @param {Object} props
+ * @param {Object} props.route - Contiene `item` en modo edición.
+ * @param {Object} props.navigation - Navegación.
+ * @returns {JSX.Element}
+ */
+export default function VendedorFormulario({ route, navigation }) {
+  const { addVendedor, updateVendedor, categorias } = useAppData();
+  const { item } = route.params || {};
+  const editando = !!item;
+
+  const [cedula, setCedula] = useState(item?.cedula || '');
+  const [nombre, setNombre] = useState(item?.nombre || '');
+  const [nResolucion, setNResolucion] = useState(item?.nResolucion || '');
+  const [fechaEmision, setFechaEmision] = useState(item?.fechaEmision || getHoy());
+  const [fechaExpiracion, setFechaExpiracion] = useState(item?.fechaExpiracion || getHoyMasUnAno());
+  const [idHabitante, setIdHabitante] = useState(item?.idHabitante ?? '');
+  const [categoriasIds, setCategoriasIds] = useState((item?.categorias || []).map((c) => c.idCategoria));
+  const [error, setError] = useState('');
+  const [guardando, setGuardando] = useState(false);
+
+  /**
+   * Activa o desactiva una categoría en la selección múltiple.
+   * @param {number} id - ID de la categoría.
+   */
+  const toggleCategoria = (id) => {
+    setCategoriasIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+  };
+
+  /**
+   * Valida campos y envía el payload al backend.
+   * @async
+   */
+  const handleSubmit = async () => {
+    if (!cedula.trim() || !nombre.trim() || !nResolucion.trim() || !fechaEmision || !fechaExpiracion) {
+      setError('Completa cédula, nombre, resolución y ambas fechas.');
+      return;
+    }
+    if (!/^\d{10}$/.test(cedula.trim())) {
+      setError('La cédula debe tener 10 dígitos.');
+      return;
+    }
+    if (categoriasIds.length === 0) {
+      setError('Selecciona al menos una categoría.');
+      return;
+    }
+    if (new Date(fechaEmision) > new Date(getHoy())) {
+      setError('La fecha de emisión no puede ser posterior a hoy.');
+      return;
+    }
+    if (new Date(fechaExpiracion) < new Date(fechaEmision)) {
+      setError('La fecha de expiración no puede ser anterior a la de emisión.');
+      return;
+    }
+    setGuardando(true);
+    setError('');
+    try {
+      const payload = {
+        cedula: cedula.trim(),
+        nombre: nombre.trim(),
+        foto: item?.foto || 'Pendiente de definición de infraestructura',
+        nResolucion: nResolucion.trim(),
+        fechaEmision,
+        fechaExpiracion,
+        estadoActivo: editando ? (item?.estadoActivo || 'VIGENTE') : 'VIGENTE',
+        idHabitante: idHabitante ? Number(idHabitante) : null,
+        categoriasIds,
+      };
+      if (editando) {
+        await updateVendedor(item.idVendedor, payload);
+      } else {
+        await addVendedor(payload);
+      }
+      navigation.goBack();
+    } catch (err) {
+      setError('Error al guardar el vendedor');
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Ionicons name="chevron-back" size={24} color={COLORS.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitulo}>{editando ? 'Editar Vendedor' : 'Nuevo Vendedor'}</Text>
+        <View style={{ width: 44 }} />
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+        <View style={styles.form}>
+          <View style={styles.campo}>
+            <Text style={styles.label}>Cédula *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="10 dígitos"
+              value={cedula}
+              onChangeText={setCedula}
+              keyboardType="numeric"
+              maxLength={10}
+            />
+          </View>
+
+          <View style={styles.campo}>
+            <Text style={styles.label}>Nombre completo *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Nombre y apellido"
+              value={nombre}
+              onChangeText={setNombre}
+            />
+          </View>
+
+          <View style={styles.campo}>
+            <Text style={styles.label}>Categorías * (una o varias)</Text>
+            <View style={styles.categoriaChips}>
+              {categorias.map((c) => (
+                <TouchableOpacity
+                  key={c.idCategoria}
+                  style={[
+                    styles.categoriaChip,
+                    categoriasIds.includes(c.idCategoria) && styles.categoriaChipActivo,
+                  ]}
+                  onPress={() => toggleCategoria(c.idCategoria)}
+                >
+                  <Text style={[styles.categoriaChipTexto, categoriasIds.includes(c.idCategoria) && styles.categoriaChipTextoActivo]}>{c.nombre}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            {categorias.length === 0 ? <Text style={styles.noCategorias}>No hay categorías cargadas todavía.</Text> : null}
+          </View>
+
+          <View style={styles.campo}>
+            <Text style={styles.label}>N.° de resolución *</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. AXBXCX"
+              value={nResolucion}
+              onChangeText={setNResolucion}
+            />
+          </View>
+
+          <View style={styles.filaFechas}>
+            <View style={styles.campo}>
+              <Text style={styles.label}>Fecha de emisión *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                value={fechaEmision}
+                onChangeText={(text) => {
+                  setFechaEmision(text);
+                  const d = new Date(text);
+                  if (!isNaN(d.getTime())) {
+                    d.setFullYear(d.getFullYear() + 1);
+                    setFechaExpiracion(d.toISOString().split('T')[0]);
+                  }
+                }}
+              />
+            </View>
+            <View style={styles.campo}>
+              <Text style={styles.label}>Fecha de expiración *</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="YYYY-MM-DD"
+                value={fechaExpiracion}
+                onChangeText={setFechaExpiracion}
+              />
+            </View>
+          </View>
+
+          <View style={styles.campo}>
+            <Text style={styles.label}>ID de habitante (opcional)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Ej. 4050"
+              value={String(idHabitante)}
+              onChangeText={setIdHabitante}
+              keyboardType="numeric"
+            />
+          </View>
+
+          {error ? <Text style={styles.error}>{error}</Text> : null}
+
+          <View style={styles.btnContainer}>
+            <TouchableOpacity style={styles.btnSecundario} onPress={() => navigation.goBack()}>
+              <Text style={styles.btnSecundarioTexto}>Cancelar</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.btnPrimario, guardando && styles.btnDisabled]} onPress={handleSubmit} disabled={guardando}>
+              <Text style={styles.btnPrimarioTexto}>{guardando ? 'Guardando…' : (editando ? 'Actualizar' : 'Crear')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: COLORS.background },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  backBtn: { padding: 4 },
+  headerTitulo: { fontSize: 18, fontWeight: '700', color: COLORS.text, flex: 1, textAlign: 'center' },
+  scrollContent: { padding: 16, paddingBottom: 40 },
+  form: { gap: 16 },
+  campo: { gap: 6 },
+  label: { fontSize: 12, fontWeight: '500', color: '#666' },
+  input: { height: 48, borderWidth: 1, borderColor: '#d1c9b8', borderRadius: 8, paddingHorizontal: 14, fontSize: 15, backgroundColor: '#faf8f4', color: '#333' },
+  categoriaChips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  categoriaChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderWidth: 0.5, borderColor: '#d1c9b8', borderRadius: 20, backgroundColor: COLORS.background },
+  categoriaChipActivo: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  categoriaChipTexto: { fontSize: 11, color: '#666' },
+  categoriaChipTextoActivo: { color: COLORS.white },
+  noCategorias: { fontSize: 11, color: COLORS.gray },
+  filaFechas: { flexDirection: 'row', gap: 12 },
+  error: { fontSize: 12, color: COLORS.danger, textAlign: 'center' },
+  btnContainer: { flexDirection: 'row', justifyContent: 'center', marginTop: 24, gap: 12 },
+  btnPrimario: { flex: 1, height: 48, borderRadius: 8, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  btnPrimarioTexto: { fontSize: 15, fontWeight: '600', color: COLORS.white },
+  btnSecundario: { flex: 1, height: 48, borderRadius: 8, backgroundColor: COLORS.white, borderWidth: 1, borderColor: '#d1c9b8', justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
+  btnSecundarioTexto: { fontSize: 15, fontWeight: '600', color: '#666' },
+  btnDisabled: { opacity: 0.6 },
+});
+</file>
+
+<file path="servicios/api.js">
+/**
+ * @fileoverview Capa de servicio HTTP.
+ * Configura Axios, interceptores de request/response y exporta APIs por dominio.
+ * @module servicios/api
+ */
+
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE_URL, API_TIMEOUT, STORAGE_KEYS } from '../utilidades/config';
+
+/**
+ * Instancia configurada de Axios.
+ * @type {import('axios').AxiosInstance}
+ */
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: API_TIMEOUT,
+  headers: {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+  },
+});
+
+/**
+ * Interceptor de solicitudes.
+ * Inyecta el rol del usuario en el header X-User-Role para control de permisos en backend.
+ */
+api.interceptors.request.use(
+  async (config) => {
+    try {
+      const userRole = await AsyncStorage.getItem(STORAGE_KEYS.userRole);
+      if (userRole) {
+        config.headers['X-User-Role'] = userRole;
+      }
+    } catch (e) {
+      console.error('Error getting user role:', e);
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
+
+/**
+ * Interceptor de respuestas.
+ * Por ahora solo propaga el error; aquí se puede agregar lógica de refresh token.
+ */
+api.interceptors.response.use(
+  (response) => response,
+  (error) => Promise.reject(error)
+);
+
+/**
+ * Extrae un mensaje legible de un error de Axios.
+ * @param {import('axios').AxiosError} err - Error capturado.
+ * @returns {string} Mensaje traducido al español.
+ */
+export function getErrorMessage(err) {
+  if (err.response?.data?.message) return err.response.data.message;
+  if (err.response?.status === 401) return 'Sesión expirada o rol inválido.';
+  if (err.response?.status === 403) return 'No tienes permisos para realizar esta acción.';
+  return err.message || 'Error inesperado de conexión con el servidor.';
+}
+
+/**
+ * Obtiene el código de estado HTTP de un error.
+ * @param {import('axios').AxiosError} err - Error capturado.
+ * @returns {number|undefined} Código de estado HTTP.
+ */
+function getStatus(err) {
+  return err.response?.status;
+}
+
+// ─── API: Vendedores ─────────────────────────────────────────────────────────
+
+/**
+ * Conjunto de endpoints para gestión de vendedores.
+ * @namespace vendedoresApi
+ */
+export const vendedoresApi = {
+  /**
+   * Lista paginada de vendedores.
+   * @param {Object} [params] - Parámetros de paginación.
+   * @param {number} [params.page=1] - Número de página.
+   * @param {number} [params.limit=10] - Tamaño de página.
+   * @returns {Promise<{metadata: Object, data: Array}>} Respuesta del servidor.
+   */
+  listar: ({ page = 1, limit = 10 } = {}) =>
+    api.get('/vendedores', { params: { page, limit } }).then((res) => res.data),
+
+  /**
+   * Obtiene el detalle de un vendedor por ID.
+   * @param {number|string} id - Identificador del vendedor.
+   * @returns {Promise<Object>} Datos del vendedor.
+   */
+  obtener: (id) => api.get(`/vendedores/${id}`).then((res) => res.data),
+
+  /**
+   * Crea un nuevo vendedor.
+   * @param {Object} data - Payload del vendedor.
+   * @returns {Promise<Object>} Vendedor creado.
+   */
+  crear: (data) => api.post('/vendedores', data).then((res) => res.data),
+
+  /**
+   * Actualiza un vendedor existente.
+   * @param {number|string} id - Identificador del vendedor.
+   * @param {Object} data - Campos a actualizar.
+   * @returns {Promise<Object>} Vendedor actualizado.
+   */
+  actualizar: (id, data) => api.put(`/vendedores/${id}`, data).then((res) => res.data),
+
+  /**
+   * Valida un vendedor por placa o código QR.
+   * @param {string} tipoBusqueda - 'placa' | 'qr'.
+   * @param {string} valor - Valor a buscar.
+   * @returns {Promise<Object|null>} Datos del vendedor o null si no existe (404).
+   */
+  validar: (tipoBusqueda, valor) =>
+    api
+      .get('/vendedores/validar', { params: { tipoBusqueda, valor } })
+      .then((res) => res.data)
+      .catch((err) => {
+        if (getStatus(err) === 404) return null;
+        throw err;
+      }),
+};
+
+// ─── API: Vehículos ──────────────────────────────────────────────────────────
+
+/**
+ * Conjunto de endpoints para gestión de vehículos.
+ * @namespace vehiculosApi
+ */
+export const vehiculosApi = {
+  /**
+   * Lista paginada de vehículos.
+   * @param {Object} [params] - Parámetros de paginación.
+   * @param {number} [params.page=1] - Número de página.
+   * @param {number} [params.limit=10] - Tamaño de página.
+   * @returns {Promise<{metadata: Object, data: Array}>} Respuesta del servidor.
+   */
+  listar: ({ page = 1, limit = 10 } = {}) =>
+    api.get('/vehiculos', { params: { page, limit } }).then((res) => res.data),
+
+  /**
+   * Obtiene el detalle de un vehículo por ID.
+   * @param {number|string} id - Identificador del vehículo.
+   * @returns {Promise<Object>} Datos del vehículo.
+   */
+  obtener: (id) => api.get(`/vehiculos/${id}`).then((res) => res.data),
+
+  /**
+   * Crea un nuevo vehículo.
+   * @param {Object} data - Payload del vehículo.
+   * @returns {Promise<Object>} Vehículo creado.
+   */
+  crear: (data) => api.post('/vehiculos', data).then((res) => res.data),
+
+  /**
+   * Actualiza un vehículo existente.
+   * @param {number|string} id - Identificador del vehículo.
+   * @param {Object} data - Campos a actualizar.
+   * @returns {Promise<Object>} Vehículo actualizado.
+   */
+  actualizar: (id, data) => api.put(`/vehiculos/${id}`, data).then((res) => res.data),
+
+  /**
+   * Valida un vehículo por placa o código QR.
+   * @param {string} tipoBusqueda - 'placa' | 'qr'.
+   * @param {string} valor - Valor a buscar.
+   * @returns {Promise<Object|null>} Datos del vehículo o null si no existe (404).
+   */
+  validar: (tipoBusqueda, valor) =>
+    api
+      .get('/vehiculos/validar', { params: { tipoBusqueda, valor } })
+      .then((res) => res.data)
+      .catch((err) => {
+        if (getStatus(err) === 404) return null;
+        throw err;
+      }),
+};
+
+// ─── API: Categorías ─────────────────────────────────────────────────────────
+
+/**
+ * Conjunto de endpoints para gestión de categorías.
+ * @namespace categoriasApi
+ */
+export const categoriasApi = {
+  /**
+   * Lista paginada de categorías.
+   * @param {Object} [params] - Parámetros de paginación.
+   * @param {number} [params.page=1] - Número de página.
+   * @param {number} [params.limit=10] - Tamaño de página.
+   * @returns {Promise<{metadata: Object, data: Array}>} Respuesta del servidor.
+   */
+  listar: ({ page = 1, limit = 10 } = {}) =>
+    api.get('/categorias', { params: { page, limit } }).then((res) => res.data),
+
+  /**
+   * Obtiene el detalle de una categoría por ID.
+   * @param {number|string} id - Identificador de la categoría.
+   * @returns {Promise<Object>} Datos de la categoría.
+   */
+  obtener: (id) => api.get(`/categorias/${id}`).then((res) => res.data),
+
+  /**
+   * Crea una nueva categoría.
+   * @param {Object} data - Payload de la categoría.
+   * @returns {Promise<Object>} Categoría creada.
+   */
+  crear: (data) => api.post('/categorias', data).then((res) => res.data),
+
+  /**
+   * Actualiza una categoría existente.
+   * @param {number|string} id - Identificador de la categoría.
+   * @param {Object} data - Campos a actualizar.
+   * @returns {Promise<Object>} Categoría actualizada.
+   */
+  actualizar: (id, data) => api.put(`/categorias/${id}`, data).then((res) => res.data),
+
+  /**
+   * Desactiva una categoría cambiando su estado a INACTIVA.
+   * @param {number|string} id - Identificador de la categoría.
+   * @param {Object} categoriaActual - Datos actuales para preservar nombre/descripción.
+   * @returns {Promise<Object>} Categoría desactivada.
+   */
+  desactivar: (id, categoriaActual) =>
+    api
+      .put(`/categorias/${id}`, {
+        nombre: categoriaActual.nombre,
+        descripcion: categoriaActual.descripcion,
+        estadoActivo: 'INACTIVA',
+      })
+      .then((res) => res.data),
+};
+
+// ─── API: Dashboard ──────────────────────────────────────────────────────────
+
+/**
+ * Conjunto de endpoints para estadísticas del dashboard.
+ * @namespace dashboardApi
+ */
+export const dashboardApi = {
+  /**
+   * Obtiene estadísticas generales del sistema.
+   * @returns {Promise<Object>} Estadísticas agregadas.
+   */
+  stats: () => api.get('/dashboard/stats').then((res) => res.data),
+};
+
+// ─── API: Reportes ───────────────────────────────────────────────────────────
+
+/**
+ * Conjunto de endpoints para reportes.
+ * @namespace reportesApi
+ */
+export const reportesApi = {
+  /**
+   * Obtiene el conjunto de reportes del sistema.
+   * @returns {Promise<Object>} Datos de reportes.
+   */
+  get: () => api.get('/reportes').then((res) => res.data),
+};
+
+export default api;
+</file>
+
+<file path="utilidades/config.js">
+/**
+ * @fileoverview Configuración centralizada de la aplicación.
+ * Lee variables de entorno (EXPO_PUBLIC_*) y provee valores por defecto.
+ * @module utilidades/config
+ */
+
+// ─── API ───────────────────────────────────────────────────────────────────────
+
+/** URL base del backend. Fallback a IP local de desarrollo. */
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.100.2:3000/';
+
+/** Tiempo máximo de espera para peticiones HTTP (ms). */
+export const API_TIMEOUT = parseInt(process.env.EXPO_PUBLIC_API_TIMEOUT || '15000', 10);
+
+// ─── App ───────────────────────────────────────────────────────────────────────
+
+/** Nombre visible de la aplicación. */
+export const APP_NAME = process.env.EXPO_PUBLIC_APP_NAME || 'GESTOR COMUNIDAD';
+
+/** Versión actual de la aplicación. */
+export const APP_VERSION = process.env.EXPO_PUBLIC_APP_VERSION || '1.0.0';
+
+// ─── Paleta de colores unificada ─────────────────────────────────────────────
+
+/**
+ * Paleta de colores principal.
+ * Toda la aplicación debe consumir estos valores para evitar hardcodeo.
+ * @type {Object.<string, string>}
+ */
+export const COLORS = {
+  primary: '#C8871A',
+  background: '#f5f0e8',
+  text: '#1a1a2e',
+  gray: '#888',
+  success: '#065f46',
+  danger: '#991b1b',
+  warning: '#d97706',
+  white: '#ffffff',
+  border: '#e0d8c8',
+};
+
+// ─── Claves de almacenamiento local ──────────────────────────────────────────
+
+/**
+ * Claves utilizadas en AsyncStorage.
+ * @type {Object.<string, string>}
+ */
+export const STORAGE_KEYS = {
+  authToken: 'auth_token',
+  refreshToken: 'refresh_token',
+  userData: 'user_data',
+  userRole: 'userRole',
+};
+
+// ─── Paginación ──────────────────────────────────────────────────────────────
+
+/** Tamaño de página por defecto. */
+export const DEFAULT_PAGE_SIZE = 10;
+
+/** Tamaño máximo permitido de página. */
+export const MAX_PAGE_SIZE = 50;
+
+// ─── Reglas de validación ────────────────────────────────────────────────────
+
+/**
+ * Reglas de validación de formularios.
+ * @type {Object.<string, (number|RegExp)>}
+ */
+export const VALIDATION = {
+  minPasswordLength: 6,
+  cedulaLength: 10,
+  placaPattern: /^[A-Z]{3}-\d{4}$/i,
+};
+
+/** Objeto de configuración por defecto. */
+export default {
+  API_BASE_URL,
+  API_TIMEOUT,
+  APP_NAME,
+  APP_VERSION,
+  COLORS,
+  STORAGE_KEYS,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  VALIDATION,
+};
+</file>
+
+<file path="utilidades/uiOptions.js">
+/**
+ * @fileoverview Opciones visuales y utilidades de UI.
+ * Incluye paleta de colores de vehículos, generación de avatares y mapeo de hex.
+ * @module utilidades/uiOptions
+ */
+
+/**
+ * Lista de colores disponibles para vehículos.
+ * Cada entrada contiene el nombre legible y su representación hexadecimal.
+ * @type {Array<{nombre: string, hex: string}>}
+ */
+export const vehiculoColores = [
+  { nombre: 'Blanco', hex: '#FFFFFF' },
+  { nombre: 'Negro', hex: '#000000' },
+  { nombre: 'Gris', hex: '#808080' },
+  { nombre: 'Plateado', hex: '#C0C0C0' },
+  { nombre: 'Azul', hex: '#2563EB' },
+  { nombre: 'Rojo', hex: '#DC2626' },
+  { nombre: 'Verde', hex: '#16A34A' },
+  { nombre: 'Amarillo', hex: '#FACC15' },
+  { nombre: 'Naranja', hex: '#F97316' },
+  { nombre: 'Marrón', hex: '#92400E' },
+  { nombre: 'Beige', hex: '#F5F5DC' },
+  { nombre: 'Dorado', hex: '#FFD700' },
+  { nombre: 'Rosa', hex: '#EC4899' },
+  { nombre: 'Morado', hex: '#9333EA' },
+  { nombre: 'Celeste', hex: '#06B6D4' },
+];
+
+/**
+ * Obtiene el código hexadecimal de un color de vehículo dado su nombre.
+ * @param {string} nombre - Nombre del color (ej. 'Rojo').
+ * @returns {string} Código hex del color o '#999' si no se encuentra.
+ */
+export function colorHexDe(nombre) {
+  return vehiculoColores.find((c) => c.nombre.toLowerCase() === (nombre || '').toLowerCase())?.hex || '#999';
+}
+
+/**
+ * Paleta de colores para avatares generados automáticamente.
+ * @type {Array<{bg: string, color: string}>}
+ */
+const avatarColors = [
+  { bg: '#FEF3C7', color: '#92400E' },
+  { bg: '#D1FAE5', color: '#065F46' },
+  { bg: '#EDE9FE', color: '#5B21B6' },
+  { bg: '#E0F2FE', color: '#0369A1' },
+  { bg: '#FEE2E2', color: '#991B1B' },
+  { bg: '#F5F0E8', color: '#78716C' },
+  { bg: '#FCE7F3', color: '#BE185D' },
+  { bg: '#FAE8FF', color: '#A21CAF' },
+];
+
+/**
+ * Genera las iniciales de un nombre completo.
+ * @param {string} nombre - Nombre completo (ej. 'Juan Pérez').
+ * @returns {string} Iniciales en mayúsculas (ej. 'JP'). Devuelve '??' si está vacío.
+ */
+export function getInitials(nombre) {
+  if (!nombre) return '??';
+  const parts = nombre.trim().split(/\s+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/**
+ * Determina un color de avatar determinista basado en el nombre.
+ * @param {string} nombre - Nombre del usuario.
+ * @returns {{bg: string, color: string}} Objeto con color de fondo y de texto.
+ */
+export function getAvatarColors(nombre) {
+  if (!nombre) return avatarColors[0];
+  let hash = 0;
+  for (let i = 0; i < nombre.length; i++) {
+    hash = nombre.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return avatarColors[Math.abs(hash) % avatarColors.length];
+}
+</file>
+
+<file path=".gitignore">
+# Expo
+.expo/
+dist/
+web-build/
+metro-cache/
+
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test
+coverage/
+.nyc_output/
+
+# Build
+*.apk
+*.aab
+*.ipa
+*.mobileprovision
+
+# Native
+android/app/build/
+ios/build/
+
+# Hermes
+*.hbc
+</file>
+
+<file path="App.js">
+/**
+ * @fileoverview Punto de entrada de la aplicación.
+ * Configura navegación por tabs y stack, autenticación por rol y proveedores de datos.
+ * @module App
+ */
+
+import React from 'react';
+import { View, ActivityIndicator } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Ionicons } from '@expo/vector-icons';
+import { AuthProvider, useAuth } from './gatillos/useAuth';
+import { AppDataProvider } from './gatillos/useAppData';
+import { COLORS } from './utilidades/config';
+
+// Pantallas de gestión (solo administrador)
+import Dashboard from './pantallas/Dashboard';
+import VehiculosLista from './pantallas/VehiculosLista';
+import VehiculoFormulario from './pantallas/VehiculoFormulario';
+import VehiculoDetalle from './pantallas/VehiculoDetalle';
+import VendedoresLista from './pantallas/VendedoresLista';
+import VendedorFormulario from './pantallas/VendedorFormulario';
+import CategoriasLista from './pantallas/CategoriasLista';
+import CategoriaFormulario from './pantallas/CategoriaFormulario';
+
+// Pantallas de validación (solo validador)
+import ValidarVehiculo from './pantallas/ValidarVehiculo';
+import ValidarVendedor from './pantallas/ValidarVendedor';
+
+// Pantalla de selección de rol (sin login real)
+import RoleSelection from './pantallas/RoleSelection';
+
+const Stack = createStackNavigator();
+const Tab = createBottomTabNavigator();
+
+/**
+ * Configuración de tabs disponibles en la aplicación.
+ * @type {Object.<string, {component: React.ComponentType, icon: string, label: string}>}
+ */
+const tabsConfig = {
+  Dashboard: { component: Dashboard, icon: 'home', label: 'Inicio' },
+  Vehiculos: { component: VehiculosLista, icon: 'car', label: 'Vehículos' },
+  Vendedores: { component: VendedoresLista, icon: 'people', label: 'Vendedores' },
+  Categorias: { component: CategoriasLista, icon: 'grid', label: 'Categorías' },
+  ValidarVehiculo: { component: ValidarVehiculo, icon: 'qr-code', label: 'Validar Auto' },
+  ValidarVendedor: { component: ValidarVendedor, icon: 'id-card', label: 'Validar Vend.' },
+};
+
+/**
+ * Navegador de tabs principal.
+ * Lee el rol directamente del contexto y filtra las pestañas visibles.
+ * @returns {JSX.Element}
+ */
+function MainTabs() {
+  const { userRole } = useAuth();
+
+  // Validador: solo puede validar vehículos y vendedores
+  // Administrador: gestiona todo (dashboard, vehículos, vendedores, categorías)
+  const tabsToShow =
+    userRole === 'administrador'
+      ? ['Dashboard', 'Vehiculos', 'Vendedores', 'Categorias']
+      : ['ValidarVehiculo', 'ValidarVendedor'];
+
+  return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({
+        tabBarIcon: ({ focused, color, size }) => {
+          const iconName = focused ? tabsConfig[route.name].icon : `${tabsConfig[route.name].icon}-outline`;
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+        tabBarActiveTintColor: COLORS.primary,
+        tabBarInactiveTintColor: COLORS.gray,
+        tabBarStyle: {
+          backgroundColor: COLORS.white,
+          borderTopWidth: 1,
+          borderTopColor: COLORS.border,
+        },
+        headerShown: false,
+      })}
+    >
+      {tabsToShow.map((tabName) => (
+        <Tab.Screen
+          key={tabName}
+          name={tabName}
+          component={tabsConfig[tabName].component}
+          options={{ title: tabsConfig[tabName].label }}
+        />
+      ))}
+    </Tab.Navigator>
+  );
+}
+
+/**
+ * Stack interno que contiene las tabs y las pantallas de formulario apiladas.
+ * @returns {JSX.Element}
+ */
+function AppStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="Tabs" component={MainTabs} />
+      <Stack.Screen name="VehiculoFormulario" component={VehiculoFormulario} />
+      <Stack.Screen name="VehiculoDetalle" component={VehiculoDetalle} />
+      <Stack.Screen name="VendedorFormulario" component={VendedorFormulario} />
+      <Stack.Screen name="CategoriaFormulario" component={CategoriaFormulario} />
+    </Stack.Navigator>
+  );
+}
+
+/**
+ * Navegador raíz.
+ * Muestra RoleSelection si no hay rol, o el stack principal si ya existe.
+ * @returns {JSX.Element}
+ */
+function RootNavigator() {
+  const { userRole, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {!userRole ? (
+        <Stack.Screen name="RoleSelection" component={RoleSelection} />
+      ) : (
+        <Stack.Screen name="AppStack" component={AppStack} />
+      )}
+    </Stack.Navigator>
+  );
+}
+
+/**
+ * Componente raíz de la aplicación.
+ * Provee contexto de autenticación, datos y navegación.
+ * @returns {JSX.Element}
+ */
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppDataProvider>
+        <NavigationContainer>
+          <RootNavigator />
+        </NavigationContainer>
+      </AppDataProvider>
+    </AuthProvider>
+  );
+}
+</file>
+
+<file path="app.json">
+{
+  "expo": {
+    "name": "ProyectoAWM Mobile",
+    "slug": "frontend-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d9488"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.proyectoawm.mobile"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#0d9488"
+      },
+      "package": "com.proyectoawm.mobile"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-font"
+    ]
+  }
+}
+</file>
+
+<file path="babel.config.js">
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+    plugins: [
+      'react-native-reanimated/plugin'
+    ],
+  };
+};
+</file>
+
+<file path="index.js">
+import { registerRootComponent } from 'expo';
+import App from './App';
+
+registerRootComponent(App);
+</file>
+
+<file path="metro.config.js">
+const { getDefaultConfig } = require('expo/metro-config');
+
+const config = getDefaultConfig(__dirname);
+
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'jsx', 'js', 'ts', 'tsx'];
+config.resolver.assetExts = config.resolver.assetExts.filter(ext => ext !== 'svg');
+config.resolver.sourceExts.push('svg');
+
+module.exports = config;
+</file>
+
+<file path="package.json">
+{
+  "name": "frontend-mobile",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^14.0.0",
+    "@react-native-async-storage/async-storage": "1.23.1",
+    "@react-navigation/bottom-tabs": "^6.5.0",
+    "@react-navigation/native": "^6.1.0",
+    "@react-navigation/stack": "^6.3.0",
+    "axios": "^1.6.0",
+    "expo": "~51.0.0",
+    "expo-camera": "~15.0.14",
+    "expo-font": "~12.0.10",
+    "expo-status-bar": "~1.12.0",
+    "react": "18.2.0",
+    "react-native": "0.74.5",
+    "react-native-gesture-handler": "~2.16.0",
+    "react-native-reanimated": "~3.10.0",
+    "react-native-safe-area-context": "4.10.5",
+    "react-native-screens": "3.31.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.24.0"
+  },
+  "private": true
+}
+</file>
+
+</files>
