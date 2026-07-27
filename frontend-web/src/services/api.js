@@ -4,7 +4,7 @@ import axios from 'axios'
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || 'https://proyectoawm-backend-h6gfbtcph8bvgncu.canadacentral-01.azurewebsites.net',
   headers: { 'Content-Type': 'application/json' }
-})
+}) 
 
 // Todos los endpoints acordados requieren "Authorization: Bearer <token_jwt>".
 // El documento de endpoints no define un flujo de login todavía, así que por
