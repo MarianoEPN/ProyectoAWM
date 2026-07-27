@@ -10,7 +10,7 @@ function colorHexDe(nombre) {
   return vehiculoColores.find((c) => c.nombre.toLowerCase() === (nombre || '').toLowerCase())?.hex || '#999'
 }
 
-function VehiculoForm({ initial, onCancel, onSubmit }) {
+function VehiculoForm({ initial, onCancel, onSubmit, reactivar }) {
   const [placa, setPlaca] = useState(initial?.placa || '')
   const [modelo, setModelo] = useState(initial?.modelo || '')
   const [color, setColor] = useState(initial?.color || vehiculoColores[0].nombre)
@@ -19,6 +19,8 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
   const [fechaExpiracion, setFechaExpiracion] = useState(initial?.fechaExpiracion || '')
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+
+  const isReactivar = reactivar
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -59,6 +61,7 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
           placeholder="Ej. ABC-1234"
           value={placa}
           onChange={(e) => setPlaca(e.target.value)}
+          disabled={isReactivar}
         />
       </div>
       <div className="form-field">
@@ -68,6 +71,7 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
           placeholder="Ej. Toyota Hilux"
           value={modelo}
           onChange={(e) => setModelo(e.target.value)}
+          disabled={isReactivar}
         />
       </div>
       <div className="form-field">
@@ -78,11 +82,17 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
           placeholder="Ej. 4050"
           value={idHabitante}
           onChange={(e) => setIdHabitante(e.target.value)}
+          disabled={isReactivar}
         />
       </div>
       <div className="form-field">
         <label className="form-label">Color</label>
-        <select className="form-select" value={color} onChange={(e) => setColor(e.target.value)}>
+        <select
+          className="form-select"
+          value={color}
+          onChange={(e) => setColor(e.target.value)}
+          disabled={isReactivar}
+        >
           {vehiculoColores.map((c) => (
             <option key={c.nombre} value={c.nombre}>
               {c.nombre}
@@ -93,7 +103,12 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
       <div style={{ display: 'flex', gap: 10 }}>
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">Fecha de emisión *</label>
-          <input type="date" className="form-input" value={fechaEmision} onChange={(e) => setFechaEmision(e.target.value)} />
+          <input
+            type="date"
+            className="form-input"
+            value={fechaEmision}
+            onChange={(e) => setFechaEmision(e.target.value)}
+          />
         </div>
         <div className="form-field" style={{ flex: 1 }}>
           <label className="form-label">Fecha de expiración *</label>
@@ -112,7 +127,10 @@ function VehiculoForm({ initial, onCancel, onSubmit }) {
         </button>
         <button type="submit" className="btn-pri" disabled={saving}>
           <i className="ti ti-check" style={{ fontSize: 12 }} aria-hidden="true" />
-          {saving ? 'Guardando…' : 'Guardar'}
+          {saving
+            ? (isReactivar ? 'Reactivando…' : 'Guardando…')
+            : (isReactivar ? 'Reactivar' : 'Guardar')
+          }
         </button>
       </div>
     </form>
@@ -137,10 +155,21 @@ export default function GestionVehiculos() {
   const isNewRoute = location.pathname.endsWith('/nuevo')
 
   const [filtroTexto, setFiltroTexto] = useState('')
-  const [filtroEstado, setFiltroEstado] = useState('todos') // todos | VIGENTE | REVOCADA
+  const [filtroEstado, setFiltroEstado] = useState('todos')
   const [showModal, setShowModal] = useState(isNewRoute)
   const [editing, setEditing] = useState(null)
-  const [qrVehiculo, setQrVehiculo] = useState(null) // { placa, codigoQr } | 'cargando'
+  const [qrVehiculo, setQrVehiculo] = useState(null)
+
+  // Función para reactivar: carga detalle y marca reactivar
+  const handleReactivar = async (v) => {
+    try {
+      const detalle = await obtenerVehiculo(v.idVehiculo)
+      setEditing({ ...detalle, reactivar: true })
+      setShowModal(true)
+    } catch (err) {
+      alert('No se pudo cargar el detalle del vehículo: ' + getErrorMessage(err))
+    }
+  }
 
   // La API no expone búsqueda por texto (solo /vehiculos/validar es búsqueda
   // exacta por placa o qr). Este filtro solo actúa sobre lo ya cargado en la
@@ -165,6 +194,9 @@ export default function GestionVehiculos() {
 
   const handleSubmit = async (data) => {
     if (editing) {
+      if (editing.reactivar) {
+        data.estadoActivo = 'VIGENTE'
+      }
       await updateVehiculo(editing.idVehiculo, data)
     } else {
       await addVehiculo(data)
@@ -332,17 +364,23 @@ export default function GestionVehiculos() {
                     <div className="iBtn qr" title="Ver código QR" onClick={() => handleVerQr(v)}>
                       <i className="ti ti-qrcode" style={{ fontSize: 13 }} aria-hidden="true" />
                     </div>
-                    <div
-                      className="iBtn danger"
-                      title={v.estadoActivo === 'VIGENTE' ? 'Revocar' : 'Reactivar'}
-                      onClick={() => handleToggleEstado(v)}
-                    >
-                      <i
-                        className={v.estadoActivo === 'VIGENTE' ? 'ti ti-ban' : 'ti ti-rotate-clockwise'}
-                        style={{ fontSize: 13 }}
-                        aria-hidden="true"
-                      />
-                    </div>
+                    {v.estadoActivo === 'VIGENTE' ? (
+                      <div
+                        className="iBtn danger"
+                        title="Revocar"
+                        onClick={() => handleToggleEstado(v)}
+                      >
+                        <i className="ti ti-ban" style={{ fontSize: 13 }} aria-hidden="true" />
+                      </div>
+                    ) : (
+                      <div
+                        className="iBtn reactivate"
+                        title="Reactivar"
+                        onClick={() => handleReactivar(v)}
+                      >
+                        <i className="ti ti-refresh" style={{ fontSize: 13 }} aria-hidden="true" />
+                      </div>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -366,11 +404,26 @@ export default function GestionVehiculos() {
 
       {showModal && (
         <Modal
-          title={editing ? 'Editar vehículo' : 'Nuevo vehículo'}
-          subtitle="Completa los datos del vehículo"
+          title={
+            editing?.reactivar
+              ? 'Reactivar vehículo'
+              : editing
+                ? 'Editar vehículo'
+                : 'Nuevo vehículo'
+          }
+          subtitle={
+            editing?.reactivar
+              ? 'Solo puedes modificar las fechas de emisión y expiración'
+              : 'Completa los datos del vehículo'
+          }
           onClose={closeModal}
         >
-          <VehiculoForm initial={editing} onCancel={closeModal} onSubmit={handleSubmit} />
+          <VehiculoForm
+            initial={editing}
+            onCancel={closeModal}
+            onSubmit={handleSubmit}
+            reactivar={editing?.reactivar || false}
+          />
         </Modal>
       )}
 
