@@ -4,4 +4,4 @@ const { login } = require('../controllers/autorizacion.controller');
 
 router.post('/login', login);
 
-module.exports = router;
+module.exports = router; 
