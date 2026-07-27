@@ -12,7 +12,7 @@ export function usePagination(items, pageSize = 4) {
     const start = (page - 1) * pageSize
     return items.slice(start, start + pageSize)
   }, [items, page, pageSize])
-
+  
   return {
     page,
     setPage,
