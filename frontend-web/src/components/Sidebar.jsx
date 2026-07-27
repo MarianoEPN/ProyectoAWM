@@ -1,15 +1,4 @@
-const cors = require('cors')
-const allowedOrigins = [
-  process.env.FRONTEND_URL,
-  'http://localhost:15163'
-].filter(Boolean)
-
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
-    callback(new Error('CORS no permitido'))
-  }
-}))import React from 'react'
+import React from 'react'
 import { NavLink } from 'react-router-dom'
 
 const internoNav = [
