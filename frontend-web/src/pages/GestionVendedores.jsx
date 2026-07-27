@@ -4,14 +4,13 @@ import Layout from '../components/Layout.jsx'
 import Modal from '../components/Modal.jsx'
 import { useAppData } from '../data/AppDataContext.jsx'
 import { getInitials, getAvatarColors } from '../utils/avatar.js'
-import { getErrorMessage } from '../services/api.js'
+import { apiBaseUrl, getErrorMessage } from '../services/api.js'
 
 const resolveImageUrl = (src) => {
   if (!src) return null
   if (src.startsWith('http://') || src.startsWith('https://')) return src
   if (src.startsWith('/uploads')) {
-    const baseUrl = import.meta.env.VITE_API_URL || window.location.origin
-    return `${baseUrl}${src}`
+    return `${apiBaseUrl}${src}`
   }
   return src
 }
