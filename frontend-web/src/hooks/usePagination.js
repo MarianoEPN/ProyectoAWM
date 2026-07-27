@@ -23,3 +23,8 @@ export function usePagination(items, pageSize = 4) {
     prev: () => setPage((p) => Math.max(1, p - 1))
   }
 }
+
+
+
+
+

@@ -37,7 +37,7 @@ export default function Dashboard() {
   // actualmente cargada (10 registros), porque el backend no expone un
   // conteo agregado por estado — solo totalItems general en la metadata.
   const vendedoresNoVigentesEnPagina = vendedores.filter((v) => v.estadoActivo !== 'VIGENTE').length
-
+//
   return (
     <Layout variant="interno">
       <div style={{ marginBottom: 18 }}>
@@ -71,7 +71,7 @@ export default function Dashboard() {
           to="/categorias"
         />
       </div>
-
+    
       <div className="card">
         <div className="card-head">
           <div>
