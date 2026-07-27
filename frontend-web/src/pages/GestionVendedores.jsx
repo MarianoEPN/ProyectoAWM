@@ -6,7 +6,7 @@ import { useAppData } from '../data/AppDataContext.jsx'
 import { getInitials, getAvatarColors } from '../utils/avatar.js'
 import { getErrorMessage } from '../services/api.js'
 
-function VendedorForm({ initial, categorias, onCancel, onSubmit }) {
+function VendedorForm({ initial, categorias, onCancel, onSubmit, reactivar }) {
   const [cedula, setCedula] = useState(initial?.cedula || '')
   const [nombre, setNombre] = useState(initial?.nombre || '')
   const [nResolucion, setNResolucion] = useState(initial?.nResolucion || '')
@@ -14,11 +14,30 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit }) {
   const [fechaExpiracion, setFechaExpiracion] = useState(initial?.fechaExpiracion || '')
   const [idHabitante, setIdHabitante] = useState(initial?.idHabitante ?? '')
   const [categoriasIds, setCategoriasIds] = useState((initial?.categorias || []).map((c) => c.idCategoria))
+  // 1. NUEVOS ESTADOS PARA MANEJAR LA FOTO Y SU PREVISUALIZACIÓN
+  const [fotoFile, setFotoFile] = useState(null)
+  const [preview, setPreview] = useState(initial?.foto || null)
+
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
+  const isReactivar = reactivar
 
   const toggleCategoria = (id) => {
     setCategoriasIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+  }
+
+  // Manejador del cambio de archivo de la foto
+  const handleFotoChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        setError('Por favor selecciona un archivo de imagen válido (JPG, PNG, WEBP).')
+        return
+      }
+      setFotoFile(file)
+      setPreview(URL.createObjectURL(file)) // Genera URL temporal para vista previa
+      setError('')
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -42,17 +61,24 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit }) {
     setSaving(true)
     setError('')
     try {
-      await onSubmit({
-        cedula: cedula.trim(),
-        nombre: nombre.trim(),
-        foto: initial?.foto || 'Pendiente de definición de infraestructura',
-        nResolucion: nResolucion.trim(),
-        fechaEmision,
-        fechaExpiracion,
-        estadoActivo: initial?.estadoActivo || 'VIGENTE',
-        idHabitante: idHabitante ? Number(idHabitante) : null,
-        categoriasIds
-      })
+      // 2. CONSTRUIR FORMDATA EN LUGAR DE UN OBJETO JSON
+      const formData = new FormData()
+      formData.append('cedula', cedula.trim())
+      formData.append('nombre', nombre.trim())
+      formData.append('nResolucion', nResolucion.trim())
+      formData.append('fechaEmision', fechaEmision)
+      formData.append('fechaExpiracion', fechaExpiracion)
+      formData.append('estadoActivo', initial?.estadoActivo || 'VIGENTE')
+      if (idHabitante) formData.append('idHabitante', Number(idHabitante))
+
+      // Pasar array de categorías
+      categoriasIds.forEach((id) => formData.append('categoriasIds', id))
+
+      // Adjuntar el archivo de imagen si el usuario seleccionó uno nuevo
+      if (fotoFile) {
+        formData.append('foto', fotoFile) // 'foto' debe coincidir con upload.single('foto') en Multer
+      }
+      await onSubmit(formData)
     } catch (err) {
       setError(getErrorMessage(err))
     } finally {
@@ -62,6 +88,61 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit }) {
 
   return (
     <form onSubmit={handleSubmit}>
+      {/* campo: FOTO DEL VENDEDOR */}
+      <div className="form-field" style={{ marginBottom: 16 }}>
+        <label className="form-label">Foto del vendedor</label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {/* Vista previa o avatar por defecto */}
+          <div
+            style={{
+              width: 60,
+              height: 60,
+              borderRadius: '50%',
+              overflow: 'hidden',
+              background: '#f0ede6',
+              border: '1px solid #d1c9b8',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}
+          >
+            {preview ? (
+              <img src={preview} alt="Vista previa" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : (
+              <i className="ti ti-user" style={{ fontSize: 24, color: '#999' }} />
+            )}
+          </div>
+
+          {/* Selector de archivo */}
+          <div style={{ flex: 1 }}>
+            <input
+              type="file"
+              accept="image/*"
+              id="foto-input"
+              onChange={handleFotoChange}
+              disabled={isReactivar}
+              style={{ display: 'none' }}
+            />
+            <label
+              htmlFor="foto-input"
+              className="btn-sec"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 6,
+                cursor: isReactivar ? 'not-allowed' : 'pointer',
+                padding: '6px 12px',
+                fontSize: 12
+              }}
+            >
+              <i className="ti ti-upload" style={{ fontSize: 14 }} />
+              {preview ? 'Cambiar foto' : 'Subir foto'}
+            </label>
+            {fotoFile && <span style={{ fontSize: 11, color: '#666', marginLeft: 8 }}>{fotoFile.name}</span>}
+          </div>
+        </div>
+      </div>
       <div className="form-field">
         <label className="form-label">Cédula *</label>
         <input
@@ -70,11 +151,12 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit }) {
           placeholder="10 dígitos"
           value={cedula}
           onChange={(e) => setCedula(e.target.value)}
+          disabled={isReactivar}
         />
       </div>
       <div className="form-field">
         <label className="form-label">Nombre completo *</label>
-        <input className="form-input" placeholder="Nombre y apellido" value={nombre} onChange={(e) => setNombre(e.target.value)} />
+        <input className="form-input" placeholder="Nombre y apellido" value={nombre} onChange={(e) => setNombre(e.target.value)} disabled={isReactivar} />
       </div>
       <div className="form-field">
         <label className="form-label">Categorías * (una o varias)</label>
@@ -99,6 +181,7 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit }) {
                 type="checkbox"
                 checked={categoriasIds.includes(c.idCategoria)}
                 onChange={() => toggleCategoria(c.idCategoria)}
+                disabled={isReactivar}
                 style={{ display: 'none' }}
               />
               {c.nombre}
@@ -115,6 +198,7 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit }) {
           placeholder="Ej. AXBXCX"
           value={nResolucion}
           onChange={(e) => setNResolucion(e.target.value)}
+          disabled={isReactivar}
         />
       </div>
       <div style={{ display: 'flex', gap: 10 }}>
@@ -149,7 +233,10 @@ function VendedorForm({ initial, categorias, onCancel, onSubmit }) {
         </button>
         <button type="submit" className="btn-pri" disabled={saving}>
           <i className="ti ti-check" style={{ fontSize: 12 }} aria-hidden="true" />
-          {saving ? 'Guardando…' : 'Guardar'}
+          {saving
+            ? (isReactivar ? 'Reactivando…' : 'Guardando…')
+            : (isReactivar ? 'Reactivar' : 'Guardar')
+          }
         </button>
       </div>
     </form>
@@ -203,6 +290,9 @@ export default function GestionVendedores() {
 
   const handleSubmit = async (data) => {
     if (editing) {
+      if (editing.reactivar) {
+        data.estadoActivo = 'VIGENTE';
+      }
       await updateVendedor(editing.idVendedor, data)
     } else {
       await addVendedor(data)
@@ -232,6 +322,18 @@ export default function GestionVendedores() {
       await revocarVendedor(detalle)
     } catch (err) {
       alert('No se pudo revocar la autorización: ' + getErrorMessage(err))
+    } finally {
+      setCargandoDetalle(false)
+    }
+  }
+  const handleReactivar = async (v) => {
+    setCargandoDetalle(true)
+    try {
+      const detalle = await obtenerVendedor(v.idVendedor)
+      setEditing({ ...detalle, reactivar: true })  // flag para identificar reactivación
+      setShowModal(true)
+    } catch (err) {
+      alert('No se pudo cargar el detalle del vendedor: ' + getErrorMessage(err))
     } finally {
       setCargandoDetalle(false)
     }
@@ -384,9 +486,15 @@ export default function GestionVendedores() {
                     <div className="iBtn edit" title="Editar" onClick={() => handleEditar(v)}>
                       <i className="ti ti-edit" style={{ fontSize: 13 }} aria-hidden="true" />
                     </div>
-                    <div className="iBtn danger" title="Revocar" onClick={() => handleRevocar(v)}>
-                      <i className="ti ti-ban" style={{ fontSize: 13 }} aria-hidden="true" />
-                    </div>
+                    {v.estadoActivo === 'REVOCADA' ? (
+                      <div className="iBtn reactivate" title="Reactivar" onClick={() => handleReactivar(v)}>
+                        <i className="ti ti-refresh" style={{ fontSize: 13 }} aria-hidden="true" />
+                      </div>
+                    ) : (
+                      <div className="iBtn danger" title="Revocar" onClick={() => handleRevocar(v)}>
+                        <i className="ti ti-ban" style={{ fontSize: 13 }} aria-hidden="true" />
+                      </div>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -416,11 +524,21 @@ export default function GestionVendedores() {
 
       {showModal && (
         <Modal
-          title={editing ? 'Editar vendedor' : 'Nuevo vendedor'}
-          subtitle="Completa los datos de la autorización"
+          title={
+            editing?.reactivar
+              ? 'Reactivar vendedor'
+              : editing
+                ? 'Editar vendedor'
+                : 'Nuevo vendedor'
+          }
+          subtitle={
+            editing?.reactivar
+              ? 'Solo puedes modificar las fechas de emisión y expiración'
+              : 'Completa los datos de la autorización'
+          }
           onClose={closeModal}
         >
-          <VendedorForm initial={editing} categorias={categorias} onCancel={closeModal} onSubmit={handleSubmit} />
+          <VendedorForm initial={editing} categorias={categorias} onCancel={closeModal} onSubmit={handleSubmit} reactivar={editing?.reactivar || false} />
         </Modal>
       )}
     </Layout>
