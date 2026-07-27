@@ -1,4 +1,15 @@
-import React from 'react'
+const cors = require('cors')
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:15163'
+].filter(Boolean)
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) return callback(null, true)
+    callback(new Error('CORS no permitido'))
+  }
+}))import React from 'react'
 import { NavLink } from 'react-router-dom'
 
 const internoNav = [
@@ -18,8 +29,7 @@ const internoNav = [
     section: 'Vehículos',
     items: [
       { to: '/vehiculos', label: 'Vehículos', icon: 'ti-car' },
-      //{ to: '/vehiculos/nuevo', label: 'Registrar', icon: 'ti-circle-plus' },
-      { to: '/qr', label: 'Gestión QR', icon: 'ti-qrcode' }
+      //{ to: '/vehiculos/nuevo', label: 'Registrar', icon: 'ti-circle-plus' }
     ]
   },
   {

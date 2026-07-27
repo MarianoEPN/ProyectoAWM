@@ -23,7 +23,7 @@ export default function Modal({ title, subtitle, onClose, children }) {
             {subtitle && <p className="card-sub">{subtitle}</p>}
           </div>
           <button className="modal-close" onClick={onClose} aria-label="Cerrar">
-            <i className="ti ti-x" style={{ fontSize: 14 }} aria-hidden="true" />
+            <span aria-hidden="true" style={{ fontSize: 16, lineHeight: 1 }}>&times;</span>
           </button>
         </div>
         <div className="modal-body">{children}</div>

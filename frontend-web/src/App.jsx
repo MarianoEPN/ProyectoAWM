@@ -29,16 +29,6 @@ export default function App() {
       <Route path="/validar/vendedor" element={<ValidarVendedor />} />
 
       <Route
-        path="/qr"
-        element={
-          <Placeholder
-            icon="ti-qrcode"
-            title="Gestión QR"
-            description="Aquí podrás regenerar, revocar o auditar los códigos QR emitidos. Pantalla pendiente de diseño."
-          />
-        }
-      />
-      <Route
         path="/reportes"
         element={
           <Reportes/>

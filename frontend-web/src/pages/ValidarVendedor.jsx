@@ -4,6 +4,15 @@ import { useAppData } from '../data/AppDataContext.jsx'
 import { getInitials, getAvatarColors } from '../utils/avatar.js'
 import { getErrorMessage } from '../services/api.js'
 
+const resolveImageUrl = (src) => {
+  if (!src) return null
+  if (src.startsWith('http://') || src.startsWith('https://')) return src
+  if (src.startsWith('/uploads')) {
+    return `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}${src}`
+  }
+  return src
+}
+
 export default function ValidarVendedor() {
   const { validarVendedor, historialVendedores } = useAppData()
   const [tipoBusqueda, setTipoBusqueda] = useState('cedula') // cedula | resolucion | qr
@@ -100,7 +109,6 @@ export default function ValidarVendedor() {
         <div className="card">
           <div className="card-head">
             <p className="card-title">Últimas verificaciones</p>
-            <p className="card-sub">Solo de esta sesión (el backend no las persiste todavía)</p>
           </div>
           {historialVendedores.length === 0 && (
             <div style={{ padding: 16, textAlign: 'center', color: '#aaa', fontSize: 11 }}>Sin verificaciones aún.</div>
@@ -203,10 +211,19 @@ export default function ValidarVendedor() {
                   fontSize: 24,
                   fontWeight: 600,
                   color: getAvatarColors(resultado.nombre).color,
-                  marginBottom: 8
+                  marginBottom: 8,
+                  overflow: 'hidden'
                 }}
               >
-                {getInitials(resultado.nombre)}
+                {resultado.foto ? (
+                  <img
+                    src={resolveImageUrl(resultado.foto)}
+                    alt={resultado.nombre}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  />
+                ) : (
+                  getInitials(resultado.nombre)
+                )}
               </div>
               <p style={{ fontSize: 15, fontWeight: 700, color: '#1a1a2e', margin: 0 }}>{resultado.nombre}</p>
               <p style={{ fontSize: 12, color: '#888', marginTop: 2 }}>Cédula: {resultado.cedula}</p>
