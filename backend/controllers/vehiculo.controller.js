@@ -109,7 +109,7 @@ exports.validarAcceso = async (req, res, next) => {
     try {
         const { tipoBusqueda, valor } = req.query;
         if (!tipoBusqueda || !valor || !['placa', 'qr'].includes(tipoBusqueda)) {
-            return res.status(400).json({ error: true, statusCode: 400, message: "Falta parámetro o tipoBusqueda no es válido (use placa o qr)." });
+            return res.status(400).json({ error: true, statusCode: 400, message: "Parámetros inválidos." });
         }
 
         const columna = tipoBusqueda === 'placa' ? 'placa' : 'codigoQr';
@@ -118,11 +118,15 @@ exports.validarAcceso = async (req, res, next) => {
             include: [{ model: Habitante, as: 'propietario' }]
         });
 
-        if (!vehiculo) {
-            return res.status(404).json({ error: true, statusCode: 404, message: "No se encontró ningún vehículo que coincida con el parámetro de búsqueda ingresado." });
+        if (!vehiculo) return res.status(404).json({ error: true, statusCode: 404, message: "Vehículo no encontrado." });
+
+        // 🟢 DEFENSA 10/10: Expiración automática si el tiempo ya pasó al momento del escaneo
+        const fechaActual = new Date().toISOString().split('T')[0];
+        if (vehiculo.estadoActivo === 'VIGENTE' && new Date(vehiculo.fechaExpiracion) < new Date(fechaActual)) {
+            vehiculo.estadoActivo = 'REVOCADA';
+            await vehiculo.update({ estadoActivo: 'REVOCADA' });
         }
 
-        // RF15: Ocultar número de contacto o identificación personal del propietario al guardia
         res.status(200).json({
             placa: vehiculo.placa,
             modelo: vehiculo.modelo,
